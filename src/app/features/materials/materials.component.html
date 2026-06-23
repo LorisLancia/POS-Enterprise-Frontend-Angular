@@ -1,0 +1,216 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Material Management</h2>
+    @if (activeTab() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateForm()">+ New Material</button>
+    }
+  </div>
+
+  @if (error()) {
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ error() }}
+    <button type="button" class="btn-close" (click)="error.set('')"></button>
+  </div>
+  }
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'list'" (click)="setTab('list')">Material List</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'inventory'"
+        (click)="setTab('inventory')">Inventory</button>
+    </li>
+  </ul>
+
+  @if (loading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+  } @else {
+  @switch (activeTab()) {
+  @case ('list') {
+  @if (showForm()) {
+  <div class="card mb-4 shadow">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">{{ isEditing() ? 'Edit Material' : 'New Material' }}</h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="saveMaterial()">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="formData.name" name="name" required>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Unit *</label>
+            <select class="form-select" [(ngModel)]="formData.unit" name="unit">
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="l">l</option>
+              <option value="ml">ml</option>
+              <option value="pz">pc</option>
+              <option value="m">m</option>
+            </select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Category</label>
+            <input type="text" class="form-control" [(ngModel)]="formData.category" name="category">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Cost per Unit (€)</label>
+            <input type="number" class="form-control" [(ngModel)]="formData.costPerUnit" name="costPerUnit" step="0.01"
+              min="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Min Stock Level</label>
+            <input type="number" class="form-control" [(ngModel)]="formData.minStockLevel" name="minStockLevel" min="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Supplier ID</label>
+            <input type="number" class="form-control" [(ngModel)]="formData.supplierId" name="supplierId" min="1">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" [(ngModel)]="formData.description" name="description" rows="2"></textarea>
+        </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" [(ngModel)]="formData.isActive" name="isActive" id="isActive">
+          <label class="form-check-label" for="isActive">Active</label>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-success" [disabled]="loading()">Save</button>
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Unit</th>
+            <th>Cost/Unit</th>
+            <th>Min Stock</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of materials(); track m.id) {
+          <tr>
+            <td>{{ m.id }}</td>
+            <td>{{ m.name }}</td>
+            <td>{{ m.category || '-' }}</td>
+            <td>{{ m.unit }}</td>
+            <td>{{ m.costPerUnit | currency:'EUR' }}</td>
+            <td>{{ m.minStockLevel }}</td>
+            <td>
+              <span class="badge" [class.bg-success]="m.isActive" [class.bg-secondary]="!m.isActive">
+                {{ m.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary me-1" (click)="openEditForm(m)">✎</button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteMaterial(m.id)">🗑</button>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="text-center text-muted py-4">No materials found</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+
+  @case ('inventory') {
+  <div class="card mb-4 shadow">
+    <div class="card-header bg-info text-white">
+      <h5 class="mb-0">Register Warehouse Movement</h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="submitTransaction()">
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Material</label>
+            <select class="form-select" [(ngModel)]="transactionMaterialId" name="transactionMaterialId">
+              <option [ngValue]="null">Select...</option>
+              @for (m of materials(); track m.id) {
+              <option [ngValue]="m.id">{{ m.name }} ({{ m.unit }})</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Quantity</label>
+            <input type="number" class="form-control" [(ngModel)]="transactionQty" name="transactionQty" step="0.01">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Type</label>
+            <select class="form-select" [(ngModel)]="transactionType" name="transactionType">
+              <option value="IN">Incoming (+)</option>
+              <option value="OUT">Outgoing (-)</option>
+              <option value="ADJUSTMENT">Adjustment</option>
+            </select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-control" [(ngModel)]="transactionNotes" name="transactionNotes">
+          </div>
+          <div class="col-md-2 mb-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-info w-100" [disabled]="loading()">Record</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Material ID</th>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Unit</th>
+            <th>Warehouse</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of inventory(); track item.materialId) {
+          <tr>
+            <td>{{ item.materialId }}</td>
+            <td>{{ item.materialName }}</td>
+            <td [class.text-danger]="item.quantity <= 0" [class.fw-bold]="item.quantity <= 0">
+              {{ item.quantity | number:'1.2-2' }}
+            </td>
+            <td>{{ item.unit }}</td>
+            <td>{{ item.warehouseId }}</td>
+            <td>{{ item.updatedAt | date:'short' }}</td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No inventory data for this warehouse</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+  }
+  }
+</div>
