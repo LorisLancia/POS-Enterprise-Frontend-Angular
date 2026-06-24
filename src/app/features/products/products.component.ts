@@ -1,12 +1,14 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProductsService, Product } from '../../core/services/products.service';
+import { ProductAddonManagerComponent } from './product-addon-manager/product-addon-manager.component';
+import { ProductsService } from '../../core/services/products.service';
+import { Product } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ProductAddonManagerComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
 })
@@ -15,6 +17,11 @@ export class ProductsComponent implements OnInit {
   products = signal<Product[]>([]);
   loading = signal(false);
   error = signal('');
+  showAddonManager = signal(false);
+  selectedProductForAddons = signal<Product | null>(null);
+  isAddonManagerOpen = computed(
+    () => this.showAddonManager() && this.selectedProductForAddons() !== null,
+  );
 
   editingProduct = signal<Partial<Product> | null>(null);
   showForm = signal(false);
@@ -138,5 +145,15 @@ export class ProductsComponent implements OnInit {
         this.error.set('Error deleting: ' + err.message);
       },
     });
+  }
+  //addon manager methods
+  openAddonManager(product: Product): void {
+    this.selectedProductForAddons.set(product);
+    this.showAddonManager.set(true);
+    this.showForm.set(false);
+  }
+  closeAddonManager(): void {
+    this.showAddonManager.set(false);
+    this.selectedProductForAddons.set(null);
   }
 }

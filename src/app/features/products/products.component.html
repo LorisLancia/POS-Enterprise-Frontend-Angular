@@ -117,6 +117,7 @@
             <td class="text-end">
               <button class="btn btn-sm btn-outline-primary me-1" (click)="openEditForm(product)">✎</button>
               <button class="btn btn-sm btn-outline-danger" (click)="deleteProduct(product.id)">🗑</button>
+              <button class="btn btn-sm btn-outline-info" (click)="openAddonManager(product)">Addons</button>
             </td>
           </tr>
           } @empty {
@@ -130,3 +131,7 @@
   </div>
   }
 </div>
+@if (isAddonManagerOpen()) {
+<app-product-addon-manager [productId]="selectedProductForAddons()!.id"></app-product-addon-manager>
+<button (click)="closeAddonManager()">Close Addons</button>
+}

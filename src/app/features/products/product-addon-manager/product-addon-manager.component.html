@@ -1,0 +1,81 @@
+<div class="addon-manager">
+  <h3>Product Addons</h3>
+  @if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+  @if (loading()) { <div class="loading">Loading...</div> }
+
+  @if (showForm()) {
+  <div class="form-panel">
+    <h4>{{ isEditing() ? 'Edit' : 'New' }} Addon Group</h4>
+    <div class="form-group"><label>Name *</label><input type="text" [(ngModel)]="formName" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>Max Qty (0=unlimited)</label><input type="number" [(ngModel)]="formMaxQuantity"
+          min="0" /></div>
+      <div class="form-group"><label>Sort</label><input type="number" [(ngModel)]="formSortOrder" min="0" /></div>
+    </div>
+
+    <h5>Items</h5>
+    @for (item of formItems(); track $index) {
+    <div class="item-row">
+      <select [value]="item.addonProductId" (change)="updateItemProduct($index, $any($event.target).value)">
+        <option value="0">-- Select --</option>
+        @for (p of availableProducts(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }
+      </select>
+      <input type="number" [value]="item.quantityValue"
+        (input)="updateItemQuantityValue($index, $any($event.target).value)" min="0.01" step="0.01"
+        placeholder="Qty Value" />
+      <input type="number" [value]="item.sortOrder" (input)="updateItemSortOrder($index, $any($event.target).value)"
+        min="0" placeholder="Sort" />
+      <button class="btn-danger" (click)="removeItem($index)">Remove</button>
+    </div>
+    } @empty { <p class="empty">No items added.</p> }
+
+    <button class="btn-secondary" (click)="addItem()">+ Add Item</button>
+    <div class="form-actions">
+      <button class="btn-primary" (click)="saveAddon()"
+        [disabled]="loading()">{{ isEditing() ? 'Update' : 'Create' }}</button>
+      <button class="btn-secondary" (click)="closeForm()">Cancel</button>
+    </div>
+  </div>
+  }
+
+  @if (!showForm()) {
+  <button class="btn-primary" (click)="openCreateForm()">+ New Addon Group</button>
+  }
+
+  @if (hasAddons() && !showForm()) {
+  <div class="addons-list">
+    @for (addon of addons(); track addon.id) {
+    <div class="addon-card">
+      <div class="addon-header">
+        <strong>{{ addon.name }}</strong>
+        <span class="badge">Max: {{ addon.maxQuantity || 'Unlimited' }}</span>
+      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty Value</th>
+            <th>Sort</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of addon.items; track item.id) {
+          <tr>
+            <td>{{ getProductName(item.addonProductId) }}</td>
+            <td>{{ item.quantityValue }}</td>
+            <td>{{ item.sortOrder }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      <div class="addon-actions">
+        <button class="btn-secondary" (click)="openEditForm(addon)">Edit</button>
+        <button class="btn-danger" (click)="deleteAddon(addon.id)">Delete</button>
+      </div>
+    </div>
+    }
+  </div>
+  } @else if (!hasAddons() && !showForm() && !loading()) {
+  <p class="empty">No addon groups.</p>
+  }
+</div>
