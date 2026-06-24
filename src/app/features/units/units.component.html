@@ -1,0 +1,61 @@
+<h2>Units of Measure</h2>
+
+@if (error()) {
+<div class="error">{{ error() }}</div>
+}
+
+@if (showForm()) {
+<div class="form-panel">
+  <h4>{{ isEditing() ? 'Edit' : 'New' }} Unit</h4>
+  <input [(ngModel)]="formName" placeholder="Name *" />
+  <input [(ngModel)]="formSymbol" placeholder="Symbol * (e.g. ml, g, btl)" />
+  <select [(ngModel)]="formType">
+    <option value="piece">Piece</option>
+    <option value="volume">Volume</option>
+    <option value="weight">Weight</option>
+    <option value="container">Container</option>
+  </select>
+  <button (click)="saveUnit()" [disabled]="loading()">Save</button>
+  <button (click)="closeForm()">Cancel</button>
+</div>
+} @else {
+<button (click)="openCreateForm()">+ New Unit</button>
+}
+
+@if (loading() && !showForm()) {
+<p>Loading...</p>
+}
+
+@if (hasUnits() && !showForm()) {
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Symbol</th>
+      <th>Type</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (u of units(); track u.id) {
+    <tr>
+      <td>{{ u.id }}</td>
+      <td>{{ u.name }}</td>
+      <td><code>{{ u.symbol }}</code></td>
+      <td>{{ u.type }}</td>
+      <td>
+        <button (click)="openEditForm(u)">Edit</button>
+        <button (click)="deleteUnit(u.id)">Delete</button>
+      </td>
+    </tr>
+    } @empty {
+    <tr>
+      <td colspan="5">No units found</td>
+    </tr>
+    }
+  </tbody>
+</table>
+} @else if (!hasUnits() && !loading() && !showForm()) {
+<p>No units found.</p>
+}

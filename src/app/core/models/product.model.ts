@@ -1,3 +1,5 @@
+import { Unit } from './unit.model';
+
 export interface ProductVariant {
   id: number;
   productId: number;
@@ -13,10 +15,11 @@ export interface ProductRecipe {
   variantId: number | null;
   materialId: number;
   quantity: number;
-  unit: string;
+  unitId: number;
   wastagePercent: number;
-  material?: { id: number; name: string; unit: string };
+  material?: { id: number; name: string; unitId: number };
   variant?: ProductVariant;
+  unit?: Unit;
 }
 
 export interface ModifierOption {

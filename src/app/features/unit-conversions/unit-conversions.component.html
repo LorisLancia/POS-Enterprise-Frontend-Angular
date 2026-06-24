@@ -1,0 +1,74 @@
+<h2>Unit Conversions</h2>
+<p>Define how units relate (e.g. 1 Box = 6 Bottles)</p>
+
+@if (error()) {
+<div class="error">{{ error() }}</div>
+}
+
+@if (showForm()) {
+<div class="form-panel">
+  <h4>{{ isEditing() ? 'Edit' : 'New' }} Conversion</h4>
+
+  <label>From Unit</label>
+  <select [(ngModel)]="formFromUnitId">
+    <option [ngValue]="0">-- Select --</option>
+    @for (u of units(); track u.id) {
+    <option [ngValue]="u.id">{{ u.name }} ({{ u.symbol }})</option>
+    }
+  </select>
+
+  <label>To Unit</label>
+  <select [(ngModel)]="formToUnitId">
+    <option [ngValue]="0">-- Select --</option>
+    @for (u of units(); track u.id) {
+    <option [ngValue]="u.id">{{ u.name }} ({{ u.symbol }})</option>
+    }
+  </select>
+
+  <label>Factor (how many "to units" in 1 "from unit")</label>
+  <input type="number" [(ngModel)]="formFactor" placeholder="e.g. 6" step="0.000001" />
+
+  <button (click)="saveConversion()" [disabled]="loading()">Save</button>
+  <button (click)="closeForm()">Cancel</button>
+</div>
+} @else {
+<button (click)="openCreateForm()">+ New Conversion</button>
+}
+
+@if (loading() && !showForm()) {
+<p>Loading...</p>
+}
+
+@if (hasConversions() && !showForm()) {
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>From</th>
+      <th>To</th>
+      <th>Factor</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (conv of conversions(); track conv.id) {
+    <tr>
+      <td>{{ conv.id }}</td>
+      <td>{{ getUnitName(conv.fromUnitId) }}</td>
+      <td>{{ getUnitName(conv.toUnitId) }}</td>
+      <td>{{ conv.factor }}</td>
+      <td>
+        <button (click)="openEditForm(conv)">Edit</button>
+        <button (click)="deleteConversion(conv.id)">Delete</button>
+      </td>
+    </tr>
+    } @empty {
+    <tr>
+      <td colspan="5">No conversions found</td>
+    </tr>
+    }
+  </tbody>
+</table>
+} @else if (!hasConversions() && !loading() && !showForm()) {
+<p>No conversions found.</p>
+}

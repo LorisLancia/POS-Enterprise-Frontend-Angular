@@ -1,9 +1,12 @@
+import { Unit } from './unit.model';
+
 // src/app/core/models/material.model.ts
 export interface Material {
   id: number;
   name: string;
   description: string;
-  unit: string;
+  unitId: number; // CHANGED: era unit string
+  unit?: Unit;
   costPerUnit: number;
   minStockLevel: number;
   supplierId: number | null;

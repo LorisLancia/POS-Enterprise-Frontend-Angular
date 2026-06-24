@@ -19,6 +19,8 @@ export class LayoutComponent {
     { label: 'Products', icon: '📦', route: '/products' },
     { label: 'Materials', icon: '🏷️', route: '/materials' },
     { label: 'Categories', icon: '🏷️', route: '/categories' },
+    { label: 'Units', icon: '🏷️', route: '/units' },
+    { label: 'Unit Conversions', icon: '🏷️', route: '/unit-conversions' },
     { label: 'Users', icon: '👥', route: '/users' },
     { label: 'Sales Report', icon: '📊', route: '/sales-report' },
   ];

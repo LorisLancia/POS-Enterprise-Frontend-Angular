@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Material, InventoryItem, InventoryTransactionDto } from '../models/material.model';
+// Unit non serve qui, ma assicurati che Material importi Unit
 
 @Injectable({
   providedIn: 'root',

@@ -75,13 +75,17 @@
       <select [ngModel]="formRecipes()[$index].materialId" (ngModelChange)="updateRecipe($index, 'materialId', $event)">
         <option [ngValue]="0">-- Material --</option>
         @for (mat of materials(); track mat.id) {
-        <option [ngValue]="mat.id">{{ mat.name }} ({{ mat.unit }})</option>
+        <option [ngValue]="mat.id">{{ mat.name }}</option>
         }
       </select>
       <input type="number" [ngModel]="formRecipes()[$index].quantity"
         (ngModelChange)="updateRecipe($index, 'quantity', $event)" placeholder="Qty" />
-      <input [ngModel]="formRecipes()[$index].unit" (ngModelChange)="updateRecipe($index, 'unit', $event)"
-        placeholder="Unit" />
+      <select [ngModel]="formRecipes()[$index].unitId" (ngModelChange)="updateRecipe($index, 'unitId', $event)">
+        <option [ngValue]="0">-- Unit --</option>
+        @for (u of units(); track u.id) {
+        <option [ngValue]="u.id">{{ u.name }} ({{ u.symbol }})</option>
+        }
+      </select>
       <input type="number" [ngModel]="formRecipes()[$index].wastagePercent"
         (ngModelChange)="updateRecipe($index, 'wastagePercent', $event)" placeholder="Wastage %" />
       <button type="button" (click)="removeRecipe($index)">Remove</button>

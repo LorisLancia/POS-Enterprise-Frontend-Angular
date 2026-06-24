@@ -14,6 +14,8 @@ import { MaterialsService } from '../../core/services/materials.service';
 import { Material } from '../../core/models/material.model';
 // Rimuovi Material da materials.service se lo avevi importato lì
 import { Product, ModifierGroup } from '../../core/models/product.model';
+import { Unit } from '../../core/models/unit.model';
+import { UnitsService } from '../../core/services/units.service';
 
 @Component({
   selector: 'app-products',
@@ -30,6 +32,8 @@ export class ProductsComponent implements OnInit {
   modifierGroups = signal<ModifierGroup[]>([]);
   loading = signal(false);
   error = signal('');
+
+  units = signal<Unit[]>([]);
   showAddonManager = signal(false);
   selectedProductForAddons = signal<Product | null>(null);
   isAddonManagerOpen = computed(
@@ -58,7 +62,7 @@ export class ProductsComponent implements OnInit {
   // Form nested (solo per creazione)
   formVariants = signal<{ name: string; sku: string; priceAdjustment: number }[]>([]);
   formRecipes = signal<
-    { materialId: number; quantity: number; unit: string; wastagePercent: number }[]
+    { materialId: number; quantity: number; unitId: number; wastagePercent: number }[]
   >([]);
   formSelectedModifierIds = signal<number[]>([]);
 
@@ -69,6 +73,7 @@ export class ProductsComponent implements OnInit {
     private productsService: ProductsService,
     private categoriesService: ProductCategoriesService,
     private materialsService: MaterialsService,
+    private unitsService: UnitsService,
   ) {}
 
   ngOnInit(): void {
@@ -76,6 +81,7 @@ export class ProductsComponent implements OnInit {
     this.loadCategories();
     this.loadMaterials();
     this.loadModifierGroups();
+    this.loadUnits();
   }
 
   loadProducts(): void {
@@ -90,6 +96,12 @@ export class ProductsComponent implements OnInit {
         this.error.set('Error loading products: ' + (err.message || 'Unknown error'));
         this.loading.set(false);
       },
+    });
+  }
+  loadUnits(): void {
+    this.unitsService.getAll().subscribe({
+      next: (data: Unit[]) => this.units.set(data),
+      error: () => {},
     });
   }
 
@@ -177,7 +189,7 @@ export class ProductsComponent implements OnInit {
   addRecipe(): void {
     this.formRecipes.update((r) => [
       ...r,
-      { materialId: 0, quantity: 1, unit: '', wastagePercent: 0 },
+      { materialId: 0, quantity: 1, unitId: 0, wastagePercent: 0 },
     ]);
   }
   removeRecipe(index: number): void {
@@ -185,7 +197,7 @@ export class ProductsComponent implements OnInit {
   }
   updateRecipe(
     index: number,
-    field: 'materialId' | 'quantity' | 'unit' | 'wastagePercent',
+    field: 'materialId' | 'quantity' | 'unitId' | 'wastagePercent',
     value: string | number,
   ): void {
     this.formRecipes.update((r) => {
@@ -255,7 +267,7 @@ export class ProductsComponent implements OnInit {
           .map((r) => ({
             materialId: Number(r.materialId),
             quantity: Number(r.quantity) || 1,
-            unit: r.unit,
+            unitId: Number(r.unitId) || 0,
             wastagePercent: Number(r.wastagePercent) || 0,
           })),
         modifierGroupIds: this.formSelectedModifierIds(),

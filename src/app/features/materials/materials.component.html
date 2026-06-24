@@ -1,4 +1,3 @@
-<!-- src/app/features/materials/materials.component.html -->
 <h2>Materials</h2>
 
 @if (error()) {
@@ -8,19 +7,43 @@
 @if (showForm()) {
 <div class="form-panel">
   <h4>{{ isEditing() ? 'Edit' : 'New' }} Material</h4>
-  <input [(ngModel)]="formName" placeholder="Name *" />
-  <select [(ngModel)]="formUnit">
+
+  <label>Name *</label>
+  <input [(ngModel)]="formName" placeholder="Name" />
+
+  <label>Unit</label>
+  <select [(ngModel)]="formUnitId">
     <option value="piece">piece</option>
     <option value="gram">gram</option>
     <option value="milliliter">milliliter</option>
     <option value="bottle">bottle</option>
     <option value="can">can</option>
   </select>
-  <input type="number" [(ngModel)]="formCostPerUnit" placeholder="Cost per unit" />
-  <input type="number" [(ngModel)]="formMinStockLevel" placeholder="Min stock" />
-  <input [(ngModel)]="formCategory" placeholder="Category" />
+
+  <label>Cost per Unit</label>
+  <input type="number" [(ngModel)]="formCostPerUnit" placeholder="0.00" />
+
+  <label>Min Stock Level</label>
+  <input type="number" [(ngModel)]="formMinStockLevel" placeholder="0" />
+
+  <label>Category</label>
+  <select [(ngModel)]="formCategory">
+    <option value="">-- Select --</option>
+    @for (cat of existingCategories(); track cat) {
+    <option [value]="cat">{{ cat }}</option>
+    }
+    <option value="__new__">+ New category</option>
+  </select>
+
+  @if (showNewCategoryInput()) {
+  <input [(ngModel)]="formNewCategory" placeholder="New category name" />
+  }
+
+  <label>Description</label>
   <input [(ngModel)]="formDescription" placeholder="Description" />
+
   <label><input type="checkbox" [(ngModel)]="formIsActive" /> Active</label>
+
   <button (click)="saveMaterial()" [disabled]="loading()">Save</button>
   <button (click)="closeForm()">Cancel</button>
 </div>
@@ -51,7 +74,7 @@
     <tr>
       <td>{{ mat.id }}</td>
       <td>{{ mat.name }}</td>
-      <td>{{ mat.unit }}</td>
+      <td>{{ getUnitName(mat.unitId) }}</td>
       <td>{{ mat.costPerUnit | currency:'EUR' }}</td>
       <td>{{ mat.minStockLevel }}</td>
       <td>{{ mat.category || '-' }}</td>
