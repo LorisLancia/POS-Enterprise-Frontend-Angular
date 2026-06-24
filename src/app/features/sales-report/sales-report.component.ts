@@ -1,7 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SalesService, SalesReport, Sale } from '../../core/services/sales.service';
+import { SalesService } from '../../core/services/sales.service';
+import { SalesReport, Sale } from '../../core/models/sale.model';
 
 @Component({
   selector: 'app-sales-report',

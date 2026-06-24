@@ -18,6 +18,7 @@ export class LayoutComponent {
     { label: 'Dashboard', icon: '🏠', route: '/dashboard' },
     { label: 'Products', icon: '📦', route: '/products' },
     { label: 'Materials', icon: '🏷️', route: '/materials' },
+    { label: 'Categories', icon: '🏷️', route: '/categories' },
     { label: 'Users', icon: '👥', route: '/users' },
     { label: 'Sales Report', icon: '📊', route: '/sales-report' },
   ];

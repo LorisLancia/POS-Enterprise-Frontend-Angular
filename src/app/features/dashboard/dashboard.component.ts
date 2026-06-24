@@ -24,8 +24,8 @@ export class DashboardComponent implements OnInit {
     this.http
       .get<any[]>('http://localhost:3000/sales')
       .subscribe((res) => (this.stats.sales = res.length));
-    // this.http
-    //   .get<any[]>('http://localhost:3000/sales/shifts')
-    //   .subscribe((res) => (this.stats.shifts = res.length));
+    this.http
+      .get<any[]>('http://localhost:3000/sales/shifts')
+      .subscribe((res) => (this.stats.shifts = res.length));
   }
 }

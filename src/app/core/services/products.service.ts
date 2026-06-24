@@ -1,7 +1,9 @@
+// src/app/core/services/products.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Product } from '../models/product.model'; // <-- IMPORTA dal modello
+import { Product } from '../models/product.model';
+import { ModifierGroup } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +21,7 @@ export class ProductsService {
     return this.http.get<Product>(`${this.apiUrl}/${id}`);
   }
 
-  create(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Observable<Product> {
+  create(product: any): Observable<Product> {
     return this.http.post<Product>(this.apiUrl, product);
   }
 
@@ -27,7 +29,11 @@ export class ProductsService {
     return this.http.patch<Product>(`${this.apiUrl}/${id}`, product);
   }
 
-  delete(id: number): Observable<Product> {
-    return this.http.delete<Product>(`${this.apiUrl}/${id}`);
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getModifierGroups(): Observable<ModifierGroup[]> {
+    return this.http.get<ModifierGroup[]>(`${this.apiUrl}/modifier-groups`);
   }
 }

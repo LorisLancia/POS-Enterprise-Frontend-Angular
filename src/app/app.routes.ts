@@ -23,6 +23,11 @@ export const routes: Routes = [
           import('./features/products/products.component').then((m) => m.ProductsComponent),
       },
       {
+        path: 'categories',
+        loadComponent: () =>
+          import('./features/categories/categories.component').then((m) => m.CategoriesComponent),
+      },
+      {
         path: 'materials',
         loadComponent: () =>
           import('./features/materials/materials.component').then((m) => m.MaterialsComponent),

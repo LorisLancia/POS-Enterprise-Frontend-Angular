@@ -1,25 +1,8 @@
+// src/app/core/services/users.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface Role {
-  id: number;
-  name: string;
-  description: string | null;
-}
-
-export interface User {
-  id: number;
-  username: string;
-  fullName: string;
-  role: Role;
-  isActive: boolean;
-  storeId: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type UserRole = 'ADMIN' | 'MANAGER' | 'CASHIER';
+import { User, UserRole } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',

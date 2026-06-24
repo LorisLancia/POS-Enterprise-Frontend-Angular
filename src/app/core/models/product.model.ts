@@ -73,23 +73,31 @@ export interface ProductAddon {
 export interface Product {
   id: number;
   name: string;
-  description: string;
-  price: number;
-  cost: number;
+  description?: string;
+  basePrice: number; // ← era price
+  cost?: number;
   sku: string;
-  barcode: string;
-  category: string;
+  barcode?: string;
+  categoryId?: number; // ← era category: string
+  category?: ProductCategory; // ← oggetto completo dal backend
   isActive: boolean;
   storeId: number;
   createdAt: string;
   updatedAt: string;
-  basePrice?: number;
   taxRate?: number;
-  categoryId?: number;
   trackInventory?: boolean;
   allowDecimalQty?: boolean;
   variants?: ProductVariant[];
   recipes?: ProductRecipe[];
   modifiers?: ProductModifier[];
   addons?: ProductAddon[];
+}
+// Aggiungi anche l'import/export di ProductCategory se serve
+export interface ProductCategory {
+  id: number;
+  storeId: number;
+  name: string;
+  color: string | null;
+  sortOrder: number;
+  isActive: boolean;
 }

@@ -1,23 +1,14 @@
+// src/app/core/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-
-interface LoginResponse {
-  access_token: string;
-  user: {
-    id: number;
-    username: string;
-    full_name: string;
-    role: string;
-    permissions: string[];
-  };
-}
+import { LoginResponse, AuthUser } from '../models/auth.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = 'http://localhost:3000';
   private token = localStorage.getItem('token') || '';
-  private userSubject = new BehaviorSubject<any>(null);
+  private userSubject = new BehaviorSubject<AuthUser | null>(null);
   public user$ = this.userSubject.asObservable();
 
   constructor(private http: HttpClient) {
@@ -36,7 +27,7 @@ export class AuthService {
       );
   }
 
-  logout() {
+  logout(): void {
     this.token = '';
     localStorage.removeItem('token');
     this.userSubject.next(null);
@@ -45,18 +36,20 @@ export class AuthService {
   getToken(): string {
     return this.token;
   }
+
   isLoggedIn(): boolean {
     return !!this.token;
   }
+
   hasPermission(perm: string): boolean {
     const user = this.userSubject.value;
     if (!user) return false;
     return user.permissions?.includes('*') || user.permissions?.includes(perm);
   }
 
-  private loadUser() {
-    this.http.get(`${this.apiUrl}/auth/me`).subscribe({
-      next: (user: any) => this.userSubject.next(user),
+  private loadUser(): void {
+    this.http.get<AuthUser>(`${this.apiUrl}/auth/me`).subscribe({
+      next: (user) => this.userSubject.next(user),
       error: () => this.logout(),
     });
   }

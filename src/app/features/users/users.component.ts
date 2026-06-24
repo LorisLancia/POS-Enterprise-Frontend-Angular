@@ -1,7 +1,8 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UsersService, User, UserRole } from '../../core/services/users.service';
+import { UsersService } from '../../core/services/users.service';
+import { User, UserRole } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-users',

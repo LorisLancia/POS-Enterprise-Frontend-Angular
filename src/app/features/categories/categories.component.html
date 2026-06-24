@@ -1,0 +1,57 @@
+<!-- src/app/features/categories/categories.component.html -->
+<h2>Categories</h2>
+
+@if (error()) {
+<div class="error">{{ error() }}</div>
+}
+
+@if (showForm()) {
+<div class="form-panel">
+  <h4>{{ isEditing() ? 'Edit' : 'New' }} Category</h4>
+  <input [(ngModel)]="formName" placeholder="Name *" />
+  <input [(ngModel)]="formColor" placeholder="Color (hex)" />
+  <input type="number" [(ngModel)]="formSortOrder" placeholder="Sort Order" />
+  <button (click)="saveCategory()" [disabled]="loading()">Save</button>
+  <button (click)="closeForm()">Cancel</button>
+</div>
+} @else {
+<button (click)="openCreateForm()">+ New Category</button>
+}
+
+@if (loading() && !showForm()) {
+<p>Loading...</p>
+}
+
+@if (hasCategories() && !showForm()) {
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Color</th>
+      <th>Sort</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (cat of categories(); track cat.id) {
+    <tr>
+      <td>{{ cat.id }}</td>
+      <td>{{ cat.name }}</td>
+      <td>
+        @if (cat.color) {
+        <span [style.background-color]="cat.color" style="padding:4px 12px;border-radius:4px;">{{ cat.color }}</span>
+        } @else { - }
+      </td>
+      <td>{{ cat.sortOrder }}</td>
+      <td>
+        <button (click)="openEditForm(cat)">Edit</button>
+        <button (click)="deleteCategory(cat.id)">Delete</button>
+      </td>
+    </tr>
+    }
+  </tbody>
+</table>
+} @else if (!hasCategories() && !loading() && !showForm()) {
+<p>No categories found.</p>
+}

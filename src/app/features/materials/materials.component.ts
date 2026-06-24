@@ -1,7 +1,9 @@
+// src/app/features/materials/materials.component.ts
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MaterialsService, Material, InventoryItem } from '../../core/services/materials.service';
+import { MaterialsService } from '../../core/services/materials.service';
+import { Material } from '../../core/models/material.model';
 
 @Component({
   selector: 'app-materials',
@@ -11,34 +13,21 @@ import { MaterialsService, Material, InventoryItem } from '../../core/services/m
   styleUrl: './materials.component.scss',
 })
 export class MaterialsComponent implements OnInit {
-  // Signals
   materials = signal<Material[]>([]);
-  inventory = signal<InventoryItem[]>([]);
   loading = signal(false);
   error = signal('');
-  activeTab = signal<'list' | 'inventory'>('list');
-
-  editingMaterial = signal<Partial<Material> | null>(null);
   showForm = signal(false);
+  editingMaterial = signal<Material | null>(null);
 
-  formData: Partial<Material> = {
-    name: '',
-    description: '',
-    unit: 'kg',
-    costPerUnit: 0,
-    minStockLevel: 0,
-    supplierId: null,
-    category: '',
-    isActive: true,
-  };
+  formName = signal('');
+  formUnit = signal('piece');
+  formCostPerUnit = signal(0);
+  formMinStockLevel = signal(0);
+  formCategory = signal('');
+  formDescription = signal('');
+  formIsActive = signal(true);
 
-  warehouseId = 1;
-  transactionMaterialId: number | null = null;
-  transactionQty = 0;
-  transactionType: 'IN' | 'OUT' | 'ADJUSTMENT' = 'IN';
-  transactionNotes = '';
-
-  // Computed
+  hasMaterials = computed(() => this.materials().length > 0);
   isEditing = computed(() => this.editingMaterial() !== null);
 
   constructor(private materialsService: MaterialsService) {}
@@ -51,57 +40,38 @@ export class MaterialsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.materialsService.getAll().subscribe({
-      next: (data: Material[]) => {
+      next: (data) => {
         this.materials.set(data);
         this.loading.set(false);
       },
-      error: (err: any) => {
-        this.error.set('Error loading materials: ' + (err.message || 'Unknown error'));
+      error: (err) => {
+        this.error.set('Error: ' + (err.message || 'Unknown'));
         this.loading.set(false);
       },
     });
-  }
-
-  loadInventory(): void {
-    this.loading.set(true);
-    this.error.set('');
-    this.materialsService.getInventory(this.warehouseId).subscribe({
-      next: (data: InventoryItem[]) => {
-        this.inventory.set(data);
-        this.loading.set(false);
-      },
-      error: (err: any) => {
-        this.error.set('Error loading inventory: ' + (err.message || 'Unknown error'));
-        this.loading.set(false);
-      },
-    });
-  }
-
-  setTab(tab: 'list' | 'inventory'): void {
-    this.activeTab.set(tab);
-    if (tab === 'inventory') {
-      this.loadInventory();
-    }
   }
 
   openCreateForm(): void {
     this.editingMaterial.set(null);
-    this.formData = {
-      name: '',
-      description: '',
-      unit: 'kg',
-      costPerUnit: 0,
-      minStockLevel: 0,
-      supplierId: null,
-      category: '',
-      isActive: true,
-    };
+    this.formName.set('');
+    this.formUnit.set('piece');
+    this.formCostPerUnit.set(0);
+    this.formMinStockLevel.set(0);
+    this.formCategory.set('');
+    this.formDescription.set('');
+    this.formIsActive.set(true);
     this.showForm.set(true);
   }
 
-  openEditForm(material: Material): void {
-    this.editingMaterial.set(material);
-    this.formData = { ...material };
+  openEditForm(mat: Material): void {
+    this.editingMaterial.set(mat);
+    this.formName.set(mat.name);
+    this.formUnit.set(mat.unit);
+    this.formCostPerUnit.set(mat.costPerUnit);
+    this.formMinStockLevel.set(mat.minStockLevel);
+    this.formCategory.set(mat.category);
+    this.formDescription.set(mat.description);
+    this.formIsActive.set(mat.isActive);
     this.showForm.set(true);
   }
 
@@ -111,81 +81,53 @@ export class MaterialsComponent implements OnInit {
   }
 
   saveMaterial(): void {
-    if (!this.formData.name || !this.formData.unit) {
-      this.error.set('Name and unit are required');
+    if (!this.formName()) {
+      this.error.set('Name is required');
       return;
     }
 
     this.loading.set(true);
-    if (this.editingMaterial()?.id) {
-      this.materialsService.update(this.editingMaterial()!.id!, this.formData).subscribe({
-        next: () => {
-          this.loading.set(false);
-          this.loadMaterials();
-          this.closeForm();
-        },
-        error: (err: any) => {
-          this.loading.set(false);
-          this.error.set('Error updating: ' + err.message);
-        },
-      });
-    } else {
-      this.materialsService
-        .create(this.formData as Omit<Material, 'id' | 'createdAt' | 'updatedAt'>)
-        .subscribe({
-          next: () => {
-            this.loading.set(false);
-            this.loadMaterials();
-            this.closeForm();
-          },
-          error: (err: any) => {
-            this.loading.set(false);
-            this.error.set('Error creating: ' + err.message);
-          },
-        });
-    }
+    const dto = {
+      name: this.formName(),
+      unit: this.formUnit(),
+      costPerUnit: Number(this.formCostPerUnit()) || 0,
+      minStockLevel: Number(this.formMinStockLevel()) || 0,
+      category: this.formCategory() || '',
+      description: this.formDescription(),
+      isActive: this.formIsActive(),
+      supplierId: null,
+    };
+
+    const op =
+      this.isEditing() && this.editingMaterial()
+        ? this.materialsService.update(this.editingMaterial()!.id, dto)
+        : this.materialsService.create(dto as Omit<Material, 'id' | 'createdAt' | 'updatedAt'>);
+
+    op.subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.loadMaterials();
+        this.closeForm();
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set('Error: ' + (err.message || 'Unknown'));
+      },
+    });
   }
 
   deleteMaterial(id: number): void {
-    if (!confirm('Are you sure you want to delete this material?')) return;
+    if (!confirm('Delete this material?')) return;
     this.loading.set(true);
     this.materialsService.delete(id).subscribe({
       next: () => {
         this.loading.set(false);
         this.loadMaterials();
       },
-      error: (err: any) => {
+      error: (err) => {
         this.loading.set(false);
         this.error.set('Error deleting: ' + err.message);
       },
     });
-  }
-
-  submitTransaction(): void {
-    if (!this.transactionMaterialId || !this.transactionQty) {
-      this.error.set('Select a material and enter a valid quantity');
-      return;
-    }
-    this.loading.set(true);
-    this.materialsService
-      .createTransaction({
-        materialId: this.transactionMaterialId,
-        warehouseId: this.warehouseId,
-        quantity: this.transactionQty,
-        type: this.transactionType,
-        notes: this.transactionNotes,
-      })
-      .subscribe({
-        next: () => {
-          this.loading.set(false);
-          this.loadInventory();
-          this.transactionQty = 0;
-          this.transactionNotes = '';
-        },
-        error: (err: any) => {
-          this.loading.set(false);
-          this.error.set('Error recording movement: ' + err.message);
-        },
-      });
   }
 }

@@ -1,136 +1,166 @@
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Product Management</h2>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary" (click)="refresh()" [disabled]="loading()">
-        🔄 Refresh
-      </button>
-      <button class="btn btn-primary" (click)="openCreateForm()">
-        + New Product
-      </button>
-    </div>
-  </div>
+<h2>Product Management</h2>
 
-  @if (error()) {
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {{ error() }}
-    <button type="button" class="btn-close" (click)="error.set('')"></button>
-  </div>
+@if (error()) {
+<div class="error">{{ error() }}</div>
+}
+
+@if (loading()) {
+<p>Loading...</p>
+} @else {
+@if (showForm()) {
+<div class="form-panel">
+  <h4>{{ isEditing() ? 'Edit Product' : 'New Product' }}</h4>
+
+  <label>Name *</label>
+  <input [(ngModel)]="formData.name" placeholder="Name" />
+
+  <label>SKU *</label>
+  <input [(ngModel)]="formData.sku" placeholder="SKU" />
+
+  <label>Category</label>
+  <select [(ngModel)]="formData.categoryId">
+    <option [ngValue]="undefined">-- Select --</option>
+    @for (cat of categories(); track cat.id) {
+    <option [ngValue]="cat.id">{{ cat.name }}</option>
+    }
+  </select>
+
+  <label>Barcode</label>
+  <input [(ngModel)]="formData.barcode" placeholder="Barcode" />
+
+  <label>Base Price</label>
+  <input type="number" [(ngModel)]="formData.basePrice" placeholder="0.00" />
+
+  <label>Cost</label>
+  <input type="number" [(ngModel)]="formData.cost" placeholder="0.00" />
+
+  <label>Tax Rate (%)</label>
+  <input type="number" [(ngModel)]="formData.taxRate" placeholder="0" />
+
+  <label>Store ID</label>
+  <input type="number" [(ngModel)]="formData.storeId" />
+
+  <label>Description</label>
+  <textarea [(ngModel)]="formData.description" placeholder="Description"></textarea>
+
+  <label><input type="checkbox" [(ngModel)]="formData.isActive" /> Active</label>
+  <label><input type="checkbox" [(ngModel)]="formData.trackInventory" /> Track Inventory</label>
+  <label><input type="checkbox" [(ngModel)]="formData.allowDecimalQty" /> Allow Decimal Qty</label>
+
+  @if (!isEditing()) {
+  <!-- Variants -->
+  <fieldset>
+    <legend>Variants</legend>
+    @for (variant of formVariants(); track $index) {
+    <div class="inline-row">
+      <input [ngModel]="formVariants()[$index].name" (ngModelChange)="updateVariant($index, 'name', $event)"
+        placeholder="Name" />
+      <input [ngModel]="formVariants()[$index].sku" (ngModelChange)="updateVariant($index, 'sku', $event)"
+        placeholder="SKU" />
+      <input type="number" [ngModel]="formVariants()[$index].priceAdjustment"
+        (ngModelChange)="updateVariant($index, 'priceAdjustment', $event)" placeholder="Price Adj" />
+      <button type="button" (click)="removeVariant($index)">Remove</button>
+    </div>
+    } @empty {
+    <p>No variants added.</p>
+    }
+    <button type="button" (click)="addVariant()">+ Add Variant</button>
+  </fieldset>
+
+  <!-- Recipes -->
+  <fieldset>
+    <legend>Recipes (BOM)</legend>
+    @for (recipe of formRecipes(); track $index) {
+    <div class="inline-row">
+      <select [ngModel]="formRecipes()[$index].materialId" (ngModelChange)="updateRecipe($index, 'materialId', $event)">
+        <option [ngValue]="0">-- Material --</option>
+        @for (mat of materials(); track mat.id) {
+        <option [ngValue]="mat.id">{{ mat.name }} ({{ mat.unit }})</option>
+        }
+      </select>
+      <input type="number" [ngModel]="formRecipes()[$index].quantity"
+        (ngModelChange)="updateRecipe($index, 'quantity', $event)" placeholder="Qty" />
+      <input [ngModel]="formRecipes()[$index].unit" (ngModelChange)="updateRecipe($index, 'unit', $event)"
+        placeholder="Unit" />
+      <input type="number" [ngModel]="formRecipes()[$index].wastagePercent"
+        (ngModelChange)="updateRecipe($index, 'wastagePercent', $event)" placeholder="Wastage %" />
+      <button type="button" (click)="removeRecipe($index)">Remove</button>
+    </div>
+    } @empty {
+    <p>No recipes added.</p>
+    }
+    <button type="button" (click)="addRecipe()">+ Add Recipe</button>
+  </fieldset>
+
+  <!-- Modifier Groups -->
+  <fieldset>
+    <legend>Modifier Groups</legend>
+    @for (mg of modifierGroups(); track mg.id) {
+    <div>
+      <label>
+        <input type="checkbox" [checked]="formSelectedModifierIds().includes(mg.id)"
+          (change)="toggleModifierGroup(mg.id)" />
+        {{ mg.name }} ({{ mg.selectionType }}, min {{ mg.minSelect }}, max {{ mg.maxSelect }})
+      </label>
+    </div>
+    } @empty {
+    <p>No modifier groups available.</p>
+    }
+  </fieldset>
   }
 
-  @if (loading()) {
-  <div class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-  </div>
-  } @else {
-  @if (showForm()) {
-  <div class="card mb-4 shadow">
-    <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">{{ isEditing() ? 'Edit Product' : 'New Product' }}</h5>
-    </div>
-    <div class="card-body">
-      <form (ngSubmit)="saveProduct()">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Name *</label>
-            <input type="text" class="form-control" [(ngModel)]="formData.name" name="name" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">SKU *</label>
-            <input type="text" class="form-control" [(ngModel)]="formData.sku" name="sku" required>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Category</label>
-            <input type="text" class="form-control" [(ngModel)]="formData.category" name="category">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Barcode</label>
-            <input type="text" class="form-control" [(ngModel)]="formData.barcode" name="barcode">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Sale Price</label>
-            <input type="number" class="form-control" [(ngModel)]="formData.price" name="price" step="0.01" min="0">
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Cost</label>
-            <input type="number" class="form-control" [(ngModel)]="formData.cost" name="cost" step="0.01" min="0">
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Store ID</label>
-            <input type="number" class="form-control" [(ngModel)]="formData.storeId" name="storeId" min="1">
-          </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" [(ngModel)]="formData.description" name="description" rows="2"></textarea>
-        </div>
-        <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" [(ngModel)]="formData.isActive" name="isActive" id="isActive">
-          <label class="form-check-label" for="isActive">Active</label>
-        </div>
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-success" [disabled]="loading()">
-            {{ loading() ? 'Saving...' : 'Save' }}
-          </button>
-          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  }
-
-  <div class="card shadow">
-    <div class="card-body p-0">
-      <table class="table table-striped table-hover mb-0">
-        <thead class="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>SKU</th>
-            <th>Category</th>
-            <th>Price</th>
-            <th>Cost</th>
-            <th>Status</th>
-            <th class="text-end">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (product of products(); track product.id) {
-          <tr>
-            <td>{{ product.id }}</td>
-            <td>{{ product.name }}</td>
-            <td><code>{{ product.sku }}</code></td>
-            <td>{{ product.category || '-' }}</td>
-            <td>{{ product.price | currency:'EUR' }}</td>
-            <td>{{ product.cost | currency:'EUR' }}</td>
-            <td>
-              <span class="badge" [class.bg-success]="product.isActive" [class.bg-secondary]="!product.isActive">
-                {{ product.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-1" (click)="openEditForm(product)">✎</button>
-              <button class="btn btn-sm btn-outline-danger" (click)="deleteProduct(product.id)">🗑</button>
-              <button class="btn btn-sm btn-outline-info" (click)="openAddonManager(product)">Addons</button>
-            </td>
-          </tr>
-          } @empty {
-          <tr>
-            <td colspan="8" class="text-center text-muted py-4">No products found</td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-  }
+  <button (click)="saveProduct()" [disabled]="loading()">Save</button>
+  <button (click)="closeForm()">Cancel</button>
 </div>
+}
+
+@if (!showForm()) {
+<button (click)="openCreateForm()">+ New Product</button>
+<button (click)="refresh()">Refresh</button>
+}
+
+@if (hasProducts() && !showForm()) {
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>SKU</th>
+      <th>Category</th>
+      <th>Base Price</th>
+      <th>Cost</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (product of products(); track product.id) {
+    <tr>
+      <td>{{ product.id }}</td>
+      <td>{{ product.name }}</td>
+      <td><code>{{ product.sku }}</code></td>
+      <td>{{ getCategoryName(product.categoryId) }}</td>
+      <td>{{ product.basePrice | currency:'EUR' }}</td>
+      <td>{{ product.cost | currency:'EUR' }}</td>
+      <td>{{ product.isActive ? 'Active' : 'Inactive' }}</td>
+      <td>
+        <button (click)="openEditForm(product)">Edit</button>
+        <button (click)="deleteProduct(product.id)">Delete</button>
+        <button (click)="openAddonManager(product)">Addons</button>
+      </td>
+    </tr>
+    } @empty {
+    <tr>
+      <td colspan="8">No products found</td>
+    </tr>
+    }
+  </tbody>
+</table>
+} @else if (!hasProducts() && !loading() && !showForm()) {
+<p>No products found.</p>
+}
+}
+
 @if (isAddonManagerOpen()) {
 <app-product-addon-manager [productId]="selectedProductForAddons()!.id"></app-product-addon-manager>
 <button (click)="closeAddonManager()">Close Addons</button>
