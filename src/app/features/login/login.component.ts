@@ -13,7 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class LoginComponent {
   username = 'admin';
-  pin = '123456';
+  pin = '1234';
   companyId = 1;
   error = '';
   loading = false;
