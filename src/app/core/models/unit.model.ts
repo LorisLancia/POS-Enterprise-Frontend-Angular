@@ -1,6 +1,6 @@
 export interface Unit {
   id: number;
-  storeId: number;
+  companyId: number;
   name: string;
   symbol: string;
   type: string;

@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 
 export interface ProductCategory {
   id: number;
-  storeId: number;
+  companyId: number;
   name: string;
   color: string | null;
   sortOrder: number;

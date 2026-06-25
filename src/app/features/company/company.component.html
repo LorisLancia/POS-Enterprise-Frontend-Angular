@@ -1,0 +1,115 @@
+<div class="container">
+  <h1>Company Management</h1>
+  <p class="subtitle">Company details for receipts, invoices and reports</p>
+
+  @if (isEditing()) {
+  <div class="card form-card">
+    <h3>{{ editingId() ? 'Edit Company' : 'New Company' }}</h3>
+    <form (ngSubmit)="save()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name *</label>
+          <input [(ngModel)]="formData().name" name="name" required placeholder="E.g. Phuket Beach Club" />
+        </div>
+        <div class="form-group">
+          <label>Legal Name</label>
+          <input [(ngModel)]="formData().legalName" name="legalName" placeholder="E.g. Phuket Beach Club Co., Ltd." />
+        </div>
+        <div class="form-group">
+          <label>Tax ID</label>
+          <input [(ngModel)]="formData().taxId" name="taxId" placeholder="Tax ID" />
+        </div>
+        <div class="form-group">
+          <label>VAT Number</label>
+          <input [(ngModel)]="formData().vatNumber" name="vatNumber" placeholder="VAT Number" />
+        </div>
+        <div class="form-group full-width">
+          <label>Address</label>
+          <input [(ngModel)]="formData().address" name="address" placeholder="Street/Number" />
+        </div>
+        <div class="form-group">
+          <label>Postal Code</label>
+          <input [(ngModel)]="formData().postalCode" name="postalCode" placeholder="Postal Code" />
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input [(ngModel)]="formData().city" name="city" placeholder="City" />
+        </div>
+        <div class="form-group">
+          <label>Province</label>
+          <input [(ngModel)]="formData().province" name="province" placeholder="Province" />
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <input [(ngModel)]="formData().country" name="country" placeholder="TH" />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input [(ngModel)]="formData().phone" name="phone" placeholder="+66..." />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input [(ngModel)]="formData().email" name="email" type="email" placeholder="info@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Timezone</label>
+          <input [(ngModel)]="formData().timezone" name="timezone" placeholder="Asia/Bangkok" />
+        </div>
+        <div class="form-group">
+          <label>Currency</label>
+          <input [(ngModel)]="formData().currency" name="currency" placeholder="THB" />
+        </div>
+        <div class="form-group full-width">
+          <label>Logo URL</label>
+          <input [(ngModel)]="formData().logoUrl" name="logoUrl" placeholder="https://..." />
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn-primary">{{ editingId() ? '💾 Save Changes' : '➕ Create Company' }}</button>
+        <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  </div>
+  } @else {
+  <button class="btn-primary mb-2" (click)="startCreate()">➕ New Company</button>
+  }
+
+  <div class="card-list">
+    @for (company of companies(); track company.id) {
+    <div class="card company-card">
+      <div class="card-header">
+        <h3>{{ company.name }}</h3>
+        <div class="badges">
+          @if (company.isActive) {
+          <span class="badge active">Active</span>
+          } @else {
+          <span class="badge inactive">Inactive</span>
+          }
+        </div>
+      </div>
+      <div class="card-body">
+        <p><strong>Legal Name:</strong> {{ company.legalName || '-' }}</p>
+        <p><strong>Tax ID:</strong> {{ company.taxId || '-' }}</p>
+        <p><strong>VAT:</strong> {{ company.vatNumber || '-' }}</p>
+        <p><strong>Address:</strong> {{ company.address || '-' }}, {{ company.city || '' }}
+          {{ company.postalCode || '' }}
+        </p>
+        <p><strong>Phone:</strong> {{ company.phone || '-' }}</p>
+        <p><strong>Email:</strong> {{ company.email || '-' }}</p>
+        <p><strong>Timezone:</strong> {{ company.timezone }}</p>
+        <p><strong>Currency:</strong> {{ company.currency }}</p>
+        <p><strong>Warehouses:</strong> {{ company.warehouses?.length || 0 }}</p>
+        <p><strong>POS Clients:</strong> {{ company.posClients?.length || 0 }}</p>
+      </div>
+      <div class="card-actions">
+        <button class="btn-icon" (click)="startEdit(company)" title="Edit">✏️</button>
+        <button class="btn-icon" (click)="remove(company.id)" title="Delete">🗑️</button>
+      </div>
+    </div>
+    } @empty {
+    <div class="empty-state">
+      <p>No companies registered. Create the first company to get started.</p>
+    </div>
+    }
+  </div>
+</div>

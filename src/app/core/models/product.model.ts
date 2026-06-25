@@ -34,7 +34,7 @@ export interface ModifierOption {
 
 export interface ModifierGroup {
   id: number;
-  storeId: number;
+  companyId: number;
   name: string;
   selectionType: string;
   minSelect: number;
@@ -84,7 +84,7 @@ export interface Product {
   categoryId?: number; // ← era category: string
   category?: ProductCategory; // ← oggetto completo dal backend
   isActive: boolean;
-  storeId: number;
+  companyId: number;
   createdAt: string;
   updatedAt: string;
   taxRate?: number;
@@ -98,7 +98,7 @@ export interface Product {
 // Aggiungi anche l'import/export di ProductCategory se serve
 export interface ProductCategory {
   id: number;
-  storeId: number;
+  companyId: number;
   name: string;
   color: string | null;
   sortOrder: number;

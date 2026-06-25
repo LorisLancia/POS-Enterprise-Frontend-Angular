@@ -17,6 +17,24 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
+      // NUOVE PAGINE - Gestione Sede / Magazzini / POS
+      {
+        path: 'company',
+        loadComponent: () =>
+          import('./features/company/company.component').then((m) => m.CompanyPageComponent),
+      },
+      {
+        path: 'warehouses',
+        loadComponent: () =>
+          import('./features/warehouse/warehouse.component').then((m) => m.WarehousePageComponent),
+      },
+      {
+        path: 'pos-clients',
+        loadComponent: () =>
+          import('./features/pos-client/pos-client.component').then(
+            (m) => m.PosClientPageComponent,
+          ),
+      },
       {
         path: 'products',
         loadComponent: () =>

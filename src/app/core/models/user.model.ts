@@ -11,7 +11,7 @@ export interface User {
   fullName: string;
   role: Role;
   isActive: boolean;
-  storeId: number;
+  companyId: number;
   createdAt: string;
   updatedAt: string;
 }

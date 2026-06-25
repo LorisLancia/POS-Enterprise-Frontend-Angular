@@ -16,6 +16,9 @@ export class LayoutComponent {
 
   menuItems = [
     { label: 'Dashboard', icon: '🏠', route: '/dashboard' },
+    { label: 'Company', icon: '🏢', route: '/company' },
+    { label: 'Warehouses', icon: '🏭', route: '/warehouses' },
+    { label: 'POS Clients', icon: '🖥️', route: '/pos-clients' },
     { label: 'Products', icon: '📦', route: '/products' },
     { label: 'Materials', icon: '🏷️', route: '/materials' },
     { label: 'Categories', icon: '🏷️', route: '/categories' },

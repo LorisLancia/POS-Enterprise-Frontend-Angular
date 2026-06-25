@@ -2,7 +2,7 @@ import { Unit } from './unit.model';
 
 export interface UnitConversion {
   id: number;
-  storeId: number;
+  companyId: number;
   fromUnitId: number;
   toUnitId: number;
   factor: number;

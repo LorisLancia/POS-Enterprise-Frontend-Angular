@@ -25,7 +25,7 @@ export class UsersComponent implements OnInit {
     fullName: '',
     role: 'CASHIER' as UserRole,
     isActive: true,
-    storeId: 1,
+    companyId: 1,
   };
 
   isEditing = computed(() => this.editingUser() !== null);
@@ -64,7 +64,7 @@ export class UsersComponent implements OnInit {
       fullName: '',
       role: 'CASHIER',
       isActive: true,
-      storeId: 1,
+      companyId: 1,
     };
     this.showForm.set(true);
   }
@@ -77,7 +77,7 @@ export class UsersComponent implements OnInit {
       fullName: user.fullName,
       role: user.role.name as UserRole,
       isActive: user.isActive,
-      storeId: user.storeId,
+      companyId: user.companyId,
     };
     this.showForm.set(true);
   }
@@ -103,7 +103,7 @@ export class UsersComponent implements OnInit {
         fullName: this.formData.fullName,
         role: this.formData.role,
         isActive: this.formData.isActive,
-        storeId: this.formData.storeId,
+        companyId: this.formData.companyId,
       };
       if (this.formData.password) payload.password = this.formData.password;
 
@@ -126,7 +126,7 @@ export class UsersComponent implements OnInit {
           fullName: this.formData.fullName,
           role: this.formData.role,
           isActive: this.formData.isActive,
-          storeId: this.formData.storeId,
+          companyId: this.formData.companyId,
         })
         .subscribe({
           next: () => {

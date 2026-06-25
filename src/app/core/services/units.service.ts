@@ -13,7 +13,7 @@ export class UnitsService {
     return this.http.get<Unit[]>(this.apiUrl);
   }
 
-  create(unit: Omit<Unit, 'id' | 'storeId' | 'createdAt' | 'isActive'>): Observable<Unit> {
+  create(unit: Omit<Unit, 'id' | 'companyId' | 'createdAt' | 'isActive'>): Observable<Unit> {
     return this.http.post<Unit>(this.apiUrl, unit);
   }
 

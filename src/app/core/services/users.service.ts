@@ -26,7 +26,7 @@ export class UsersService {
     fullName: string;
     role: UserRole;
     isActive?: boolean;
-    storeId?: number;
+    companyId?: number;
   }): Observable<User> {
     return this.http.post<User>(this.apiUrl, user);
   }
@@ -38,7 +38,7 @@ export class UsersService {
       fullName?: string;
       role?: UserRole;
       isActive?: boolean;
-      storeId?: number;
+      companyId?: number;
     }>,
   ): Observable<User> {
     return this.http.patch<User>(`${this.apiUrl}/${id}`, user);

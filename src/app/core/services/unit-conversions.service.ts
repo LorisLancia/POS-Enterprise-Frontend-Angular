@@ -14,7 +14,7 @@ export class UnitConversionsService {
   }
 
   create(
-    conversion: Omit<UnitConversion, 'id' | 'storeId' | 'createdAt' | 'isActive'>,
+    conversion: Omit<UnitConversion, 'id' | 'companyId' | 'createdAt' | 'isActive'>,
   ): Observable<UnitConversion> {
     return this.http.post<UnitConversion>(this.apiUrl, conversion);
   }

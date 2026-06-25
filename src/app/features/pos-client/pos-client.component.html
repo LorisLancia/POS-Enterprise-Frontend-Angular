@@ -1,0 +1,90 @@
+<div class="container">
+  <h1>POS Clients</h1>
+  <p class="subtitle">Register cash registers linked to warehouses. Each register has separate cash tracking.</p>
+
+  <div class="filter-bar">
+    <label>Company:</label>
+    <select [(ngModel)]="selectedCompanyId" (change)="onCompanyChange()">
+      <option [value]="0">Select company...</option>
+      @for (c of companies(); track c.id) {
+      <option [value]="c.id">{{ c.name }}</option>
+      }
+    </select>
+  </div>
+
+  @if (selectedCompanyId() > 0) {
+  @if (isEditing()) {
+  <div class="card form-card">
+    <h3>{{ editingId() ? 'Edit POS Client' : 'Register New Register' }}</h3>
+    <form (ngSubmit)="save()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Warehouse *</label>
+          <select [(ngModel)]="formData().warehouseId" name="warehouseId" required>
+            <option [value]="0">Select warehouse...</option>
+            @for (w of warehouses(); track w.id) {
+            <option [value]="w.id">{{ w.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Register Name *</label>
+          <input [(ngModel)]="formData().name" name="name" required placeholder="E.g. Bar Register 1" />
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input [(ngModel)]="formData().location" name="location" placeholder="E.g. Main counter" />
+        </div>
+        <div class="form-group">
+          <label>Hardware ID</label>
+          <input [(ngModel)]="formData().hardwareId" name="hardwareId" required placeholder="E.g. POS-BAR-001" />
+          <small class="hint">Unique machine ID (MAC address or serial)</small>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn-primary">{{ editingId() ? '💾 Save' : '➕ Register' }}</button>
+        <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  </div>
+  } @else {
+  <button class="btn-primary mb-2" (click)="startCreate()">➕ Register Register</button>
+  }
+
+  <div class="card-list">
+    @for (pos of posClients(); track pos.id) {
+    <div class="card pos-card">
+      <div class="card-header">
+        <h3>{{ pos.name }}</h3>
+        <div class="badges">
+          @if (pos.isActive) {
+          <span class="badge active">Active</span>
+          } @else {
+          <span class="badge inactive">Inactive</span>
+          }
+        </div>
+      </div>
+      <div class="card-body">
+        <p><strong>Warehouse:</strong> {{ pos.warehouse?.name || '-' }}</p>
+        <p><strong>Location:</strong> {{ pos.location || '-' }}</p>
+        <p><strong>Hardware ID:</strong> <code>{{ pos.hardwareId }}</code></p>
+        <p><strong>Last Sync:</strong> {{ pos.lastSyncAt ? (pos.lastSyncAt | date:'short') : 'Never' }}</p>
+      </div>
+      <div class="card-actions">
+        <button class="btn-icon" (click)="startEdit(pos)" title="Edit">✏️</button>
+        <button class="btn-icon" (click)="syncNow(pos.id)" title="Sync now">🔄</button>
+        <button class="btn-icon" (click)="remove(pos.id)" title="Delete">🗑️</button>
+      </div>
+    </div>
+    } @empty {
+    <div class="empty-state">
+      <p>No registers registered for this company.</p>
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="empty-state">
+    <p>Select a company to view POS registers.</p>
+  </div>
+  }
+</div>

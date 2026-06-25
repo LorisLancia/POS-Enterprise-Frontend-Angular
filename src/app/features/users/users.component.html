@@ -53,7 +53,7 @@
           </div>
           <div class="col-md-4 mb-3">
             <label class="form-label">Store ID</label>
-            <input type="number" class="form-control" [(ngModel)]="formData.storeId" name="storeId" min="1">
+            <input type="number" class="form-control" [(ngModel)]="formData.companyId" name="companyId" min="1">
           </div>
           <div class="col-md-4 mb-3 d-flex align-items-center">
             <div class="form-check mt-4">
@@ -100,7 +100,7 @@
                 {{ user.role.name }}
               </span>
             </td>
-            <td>{{ user.storeId }}</td>
+            <td>{{ user.companyId }}</td>
             <td>
               <span class="badge" [class.bg-success]="user.isActive" [class.bg-secondary]="!user.isActive">
                 {{ user.isActive ? 'Active' : 'Inactive' }}

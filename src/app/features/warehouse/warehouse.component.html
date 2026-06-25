@@ -1,0 +1,78 @@
+<div class="container">
+  <h1>Warehouses</h1>
+  <p class="subtitle">Manage warehouses for each company (bar, kitchen, shisha, office...)</p>
+
+  <div class="filter-bar">
+    <label>Company:</label>
+    <select [(ngModel)]="selectedCompanyId" (change)="onCompanyChange()">
+      <option [value]="0">Select company...</option>
+      @for (c of companies(); track c.id) {
+      <option [value]="c.id">{{ c.name }}</option>
+      }
+    </select>
+  </div>
+
+  @if (selectedCompanyId() > 0) {
+  @if (isEditing()) {
+  <div class="card form-card">
+    <h3>{{ editingId() ? 'Edit Warehouse' : 'New Warehouse' }}</h3>
+    <form (ngSubmit)="save()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name *</label>
+          <input [(ngModel)]="formData().name" name="name" required placeholder="E.g. Main Bar" />
+        </div>
+        <div class="form-group full-width">
+          <label>Address / Location</label>
+          <input [(ngModel)]="formData().address" name="address" placeholder="E.g. Ground floor, right side" />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input [(ngModel)]="formData().phone" name="phone" placeholder="Internal / Phone" />
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn-primary">{{ editingId() ? '💾 Save' : '➕ Create' }}</button>
+        <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  </div>
+  } @else {
+  <button class="btn-primary mb-2" (click)="startCreate()">➕ New Warehouse</button>
+  }
+
+  <div class="card-list">
+    @for (w of warehouses(); track w.id) {
+    <div class="card warehouse-card">
+      <div class="card-header">
+        <h3>{{ w.name }}</h3>
+        <div class="badges">
+          @if (w.isActive) {
+          <span class="badge active">Active</span>
+          } @else {
+          <span class="badge inactive">Inactive</span>
+          }
+        </div>
+      </div>
+      <div class="card-body">
+        <p><strong>Address:</strong> {{ w.address || '-' }}</p>
+        <p><strong>Phone:</strong> {{ w.phone || '-' }}</p>
+        <p><strong>POS Clients:</strong> {{ w.posClients?.length || 0 }}</p>
+      </div>
+      <div class="card-actions">
+        <button class="btn-icon" (click)="startEdit(w)" title="Edit">✏️</button>
+        <button class="btn-icon" (click)="remove(w.id)" title="Delete">🗑️</button>
+      </div>
+    </div>
+    } @empty {
+    <div class="empty-state">
+      <p>No warehouses for this company. Create the first warehouse.</p>
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="empty-state">
+    <p>Select a company to view warehouses.</p>
+  </div>
+  }
+</div>

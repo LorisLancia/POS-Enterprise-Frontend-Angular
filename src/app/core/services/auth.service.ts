@@ -15,9 +15,9 @@ export class AuthService {
     if (this.token) this.loadUser();
   }
 
-  login(username: string, pin: string, storeId: number): Observable<LoginResponse> {
+  login(username: string, pin: string, companyId: number): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiUrl}/auth/login`, { username, pin, storeId })
+      .post<LoginResponse>(`${this.apiUrl}/auth/login`, { username, pin, companyId })
       .pipe(
         tap((res) => {
           this.token = res.access_token;

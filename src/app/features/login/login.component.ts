@@ -14,7 +14,7 @@ import { AuthService } from '../../core/services/auth.service';
 export class LoginComponent {
   username = 'admin';
   pin = '123456';
-  storeId = 1;
+  companyId = 1;
   error = '';
   loading = false;
 
@@ -26,7 +26,7 @@ export class LoginComponent {
   login() {
     this.loading = true;
     this.error = '';
-    this.auth.login(this.username, this.pin, this.storeId).subscribe({
+    this.auth.login(this.username, this.pin, this.companyId).subscribe({
       next: () => this.router.navigate(['/']),
       error: (err) => {
         this.error = err.error?.message || 'Login failed';
