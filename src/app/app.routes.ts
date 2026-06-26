@@ -51,18 +51,6 @@ export const routes: Routes = [
           import('./features/materials/materials.component').then((m) => m.MaterialsComponent),
       },
       {
-        path: 'units',
-        loadComponent: () =>
-          import('./features/units/units.component').then((m) => m.UnitsComponent),
-      },
-      {
-        path: 'unit-conversions',
-        loadComponent: () =>
-          import('./features/unit-conversions/unit-conversions.component').then(
-            (m) => m.UnitConversionsComponent,
-          ),
-      },
-      {
         path: 'users',
         loadComponent: () =>
           import('./features/users/users.component').then((m) => m.UsersComponent),

@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Material, InventoryItem, InventoryTransactionDto } from '../models/material.model';
-// Unit non serve qui, ma assicurati che Material importi Unit
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +20,9 @@ export class MaterialsService {
     return this.http.get<Material>(`${this.apiUrl}/${id}`);
   }
 
-  create(material: Omit<Material, 'id' | 'createdAt' | 'updatedAt'>): Observable<Material> {
+  create(
+    material: Omit<Material, 'id' | 'createdAt' | 'updatedAt' | 'companyId'>,
+  ): Observable<Material> {
     return this.http.post<Material>(this.apiUrl, material);
   }
 

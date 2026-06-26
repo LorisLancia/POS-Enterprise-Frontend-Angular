@@ -1,4 +1,4 @@
-import { Unit } from './unit.model';
+// src/app/core/models/product.model.ts
 
 export interface ProductVariant {
   id: number;
@@ -15,11 +15,10 @@ export interface ProductRecipe {
   variantId: number | null;
   materialId: number;
   quantity: number;
-  unitId: number;
+  unit: 'ML' | 'L' | 'G' | 'KG' | 'PC' | 'PK';
   wastagePercent: number;
-  material?: { id: number; name: string; unitId: number };
+  material?: { id: number; name: string; units?: { unit: string; quantity: number }[] };
   variant?: ProductVariant;
-  unit?: Unit;
 }
 
 export interface ModifierOption {
@@ -77,12 +76,12 @@ export interface Product {
   id: number;
   name: string;
   description?: string;
-  basePrice: number; // ← era price
+  basePrice: number;
   cost?: number;
   sku: string;
   barcode?: string;
-  categoryId?: number; // ← era category: string
-  category?: ProductCategory; // ← oggetto completo dal backend
+  categoryId?: number;
+  category?: ProductCategory;
   isActive: boolean;
   companyId: number;
   createdAt: string;
@@ -95,7 +94,7 @@ export interface Product {
   modifiers?: ProductModifier[];
   addons?: ProductAddon[];
 }
-// Aggiungi anche l'import/export di ProductCategory se serve
+
 export interface ProductCategory {
   id: number;
   companyId: number;
@@ -104,3 +103,13 @@ export interface ProductCategory {
   sortOrder: number;
   isActive: boolean;
 }
+
+// Standard units for dropdowns
+export const STANDARD_UNITS: { value: ProductRecipe['unit']; label: string }[] = [
+  { value: 'ML', label: 'Milliliter (ml)' },
+  { value: 'L', label: 'Liter (l)' },
+  { value: 'G', label: 'Gram (g)' },
+  { value: 'KG', label: 'Kilogram (kg)' },
+  { value: 'PC', label: 'Piece (pc)' },
+  { value: 'PK', label: 'Pack (pk)' },
+];

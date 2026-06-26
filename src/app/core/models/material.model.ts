@@ -1,19 +1,27 @@
-import { Unit } from './unit.model';
-
 // src/app/core/models/material.model.ts
+
+export interface MaterialUnit {
+  id?: number;
+  materialId?: number;
+  unit: 'ML' | 'L' | 'G' | 'KG' | 'PC' | 'PK';
+  quantity: number;
+  isDefault: boolean;
+  isPurchaseUnit: boolean;
+  isSaleUnit: boolean;
+  isActive: boolean;
+}
+
 export interface Material {
   id: number;
+  companyId: number;
   name: string;
   description: string;
-  unitId: number; // CHANGED: era unit string
-  unit?: Unit;
-  costPerUnit: number;
-  minStockLevel: number;
-  supplierId: number | null;
   category: string;
+  minStockLevel: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  units: MaterialUnit[];
 }
 
 export interface InventoryItem {

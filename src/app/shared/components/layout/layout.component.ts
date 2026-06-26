@@ -19,11 +19,9 @@ export class LayoutComponent {
     { label: 'Company', icon: '🏢', route: '/company' },
     { label: 'Warehouses', icon: '🏭', route: '/warehouses' },
     { label: 'POS Clients', icon: '🖥️', route: '/pos-clients' },
-    { label: 'Products', icon: '📦', route: '/products' },
     { label: 'Materials', icon: '🏷️', route: '/materials' },
+    { label: 'Products', icon: '📦', route: '/products' },
     { label: 'Categories', icon: '🏷️', route: '/categories' },
-    { label: 'Units', icon: '🏷️', route: '/units' },
-    { label: 'Unit Conversions', icon: '🏷️', route: '/unit-conversions' },
     { label: 'Users', icon: '👥', route: '/users' },
     { label: 'Sales Report', icon: '📊', route: '/sales-report' },
   ];

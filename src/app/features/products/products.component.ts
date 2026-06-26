@@ -2,30 +2,23 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProductAddonManagerComponent } from './product-addon-manager/product-addon-manager.component';
 import { ProductsService } from '../../core/services/products.service';
 import {
   ProductCategoriesService,
   ProductCategory,
 } from '../../core/services/product-categories.service';
-// src/app/features/products/products.component.ts
-// Cambia questa riga:
 import { MaterialsService } from '../../core/services/materials.service';
 import { Material } from '../../core/models/material.model';
-// Rimuovi Material da materials.service se lo avevi importato lì
-import { Product, ModifierGroup } from '../../core/models/product.model';
-import { Unit } from '../../core/models/unit.model';
-import { UnitsService } from '../../core/services/units.service';
+import { Product, ModifierGroup, STANDARD_UNITS } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProductAddonManagerComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
 })
 export class ProductsComponent implements OnInit {
-  // Signals base
   products = signal<Product[]>([]);
   categories = signal<ProductCategory[]>([]);
   materials = signal<Material[]>([]);
@@ -33,47 +26,46 @@ export class ProductsComponent implements OnInit {
   loading = signal(false);
   error = signal('');
 
-  units = signal<Unit[]>([]);
-  showAddonManager = signal(false);
-  selectedProductForAddons = signal<Product | null>(null);
-  isAddonManagerOpen = computed(
-    () => this.showAddonManager() && this.selectedProductForAddons() !== null,
-  );
-
   editingProduct = signal<Product | null>(null);
   showForm = signal(false);
 
-  // Form base
   formData: Partial<Product> = {
     name: '',
     sku: '',
     basePrice: 0,
-    cost: 0,
+    cost: undefined,
     categoryId: undefined,
     barcode: '',
     description: '',
     isActive: true,
-    companyId: 1,
     taxRate: 0,
     trackInventory: true,
     allowDecimalQty: false,
   };
 
-  // Form nested (solo per creazione)
   formVariants = signal<{ name: string; sku: string; priceAdjustment: number }[]>([]);
   formRecipes = signal<
-    { materialId: number; quantity: number; unitId: number; wastagePercent: number }[]
+    {
+      materialId: number;
+      quantity: number;
+      unit: Product['recipes'] extends (infer R)[]
+        ? R extends { unit: infer U }
+          ? U
+          : never
+        : never;
+      wastagePercent: number;
+    }[]
   >([]);
   formSelectedModifierIds = signal<number[]>([]);
 
   hasProducts = computed(() => this.products().length > 0);
   isEditing = computed(() => this.editingProduct() !== null);
+  standardUnits = STANDARD_UNITS;
 
   constructor(
     private productsService: ProductsService,
     private categoriesService: ProductCategoriesService,
     private materialsService: MaterialsService,
-    private unitsService: UnitsService,
   ) {}
 
   ngOnInit(): void {
@@ -81,7 +73,6 @@ export class ProductsComponent implements OnInit {
     this.loadCategories();
     this.loadMaterials();
     this.loadModifierGroups();
-    this.loadUnits();
   }
 
   loadProducts(): void {
@@ -98,30 +89,24 @@ export class ProductsComponent implements OnInit {
       },
     });
   }
-  loadUnits(): void {
-    this.unitsService.getAll().subscribe({
-      next: (data: Unit[]) => this.units.set(data),
-      error: () => {},
-    });
-  }
 
   loadCategories(): void {
     this.categoriesService.getAll().subscribe({
-      next: (data) => this.categories.set(data),
+      next: (data: ProductCategory[]) => this.categories.set(data),
       error: () => {},
     });
   }
 
   loadMaterials(): void {
     this.materialsService.getAll().subscribe({
-      next: (data) => this.materials.set(data),
+      next: (data: Material[]) => this.materials.set(data),
       error: () => {},
     });
   }
 
   loadModifierGroups(): void {
     this.productsService.getModifierGroups().subscribe({
-      next: (data) => this.modifierGroups.set(data),
+      next: (data: ModifierGroup[]) => this.modifierGroups.set(data),
       error: () => {},
     });
   }
@@ -136,12 +121,11 @@ export class ProductsComponent implements OnInit {
       name: '',
       sku: '',
       basePrice: 0,
-      cost: 0,
+      cost: undefined,
       categoryId: undefined,
       barcode: '',
       description: '',
       isActive: true,
-      companyId: 1,
       taxRate: 0,
       trackInventory: true,
       allowDecimalQty: false,
@@ -166,7 +150,6 @@ export class ProductsComponent implements OnInit {
     this.editingProduct.set(null);
   }
 
-  // --- Variants ---
   addVariant(): void {
     this.formVariants.update((v) => [...v, { name: '', sku: '', priceAdjustment: 0 }]);
   }
@@ -185,11 +168,10 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  // --- Recipes ---
   addRecipe(): void {
     this.formRecipes.update((r) => [
       ...r,
-      { materialId: 0, quantity: 1, unitId: 0, wastagePercent: 0 },
+      { materialId: 0, quantity: 1, unit: 'ML', wastagePercent: 0 },
     ]);
   }
   removeRecipe(index: number): void {
@@ -197,7 +179,7 @@ export class ProductsComponent implements OnInit {
   }
   updateRecipe(
     index: number,
-    field: 'materialId' | 'quantity' | 'unitId' | 'wastagePercent',
+    field: 'materialId' | 'quantity' | 'unit' | 'wastagePercent',
     value: string | number,
   ): void {
     this.formRecipes.update((r) => {
@@ -207,7 +189,6 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  // --- Modifiers ---
   toggleModifierGroup(id: number): void {
     this.formSelectedModifierIds.update((ids) => {
       if (ids.includes(id)) {
@@ -217,7 +198,6 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  // --- Save ---
   saveProduct(): void {
     if (!this.formData.name || !this.formData.sku) {
       this.error.set('Name and SKU are required');
@@ -225,7 +205,7 @@ export class ProductsComponent implements OnInit {
     }
 
     this.loading.set(true);
-    const basePayload = {
+    const basePayload: any = {
       name: this.formData.name,
       sku: this.formData.sku,
       basePrice: Number(this.formData.basePrice) || 0,
@@ -234,7 +214,6 @@ export class ProductsComponent implements OnInit {
       barcode: this.formData.barcode || undefined,
       description: this.formData.description || undefined,
       isActive: this.formData.isActive,
-      companyId: this.formData.companyId,
       taxRate: this.formData.taxRate ? Number(this.formData.taxRate) : undefined,
       trackInventory: this.formData.trackInventory,
       allowDecimalQty: this.formData.allowDecimalQty,
@@ -267,7 +246,7 @@ export class ProductsComponent implements OnInit {
           .map((r) => ({
             materialId: Number(r.materialId),
             quantity: Number(r.quantity) || 1,
-            unitId: Number(r.unitId) || 0,
+            unit: r.unit,
             wastagePercent: Number(r.wastagePercent) || 0,
           })),
         modifierGroupIds: this.formSelectedModifierIds(),
@@ -302,18 +281,11 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  openAddonManager(product: Product): void {
-    this.selectedProductForAddons.set(product);
-    this.showAddonManager.set(true);
-    this.showForm.set(false);
-  }
-
-  closeAddonManager(): void {
-    this.showAddonManager.set(false);
-    this.selectedProductForAddons.set(null);
-  }
-
   getCategoryName(categoryId?: number): string {
     return this.categories().find((c) => c.id === categoryId)?.name || '-';
+  }
+
+  getUnitLabel(unit: string): string {
+    return this.standardUnits.find((u) => u.value === unit)?.label || unit;
   }
 }
