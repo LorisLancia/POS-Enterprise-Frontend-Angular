@@ -1,16 +1,14 @@
-// src/app/core/services/users.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User, UserRole } from '../models/user.model';
+import { User, CreateUserDto, UpdateUserDto } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UsersService {
+  private http = inject(HttpClient);
   private apiUrl = 'http://localhost:3000/users';
-
-  constructor(private http: HttpClient) {}
 
   getAll(): Observable<User[]> {
     return this.http.get<User[]>(this.apiUrl);
@@ -20,28 +18,12 @@ export class UsersService {
     return this.http.get<User>(`${this.apiUrl}/${id}`);
   }
 
-  create(user: {
-    username: string;
-    password: string;
-    fullName: string;
-    role: UserRole;
-    isActive?: boolean;
-    companyId?: number;
-  }): Observable<User> {
-    return this.http.post<User>(this.apiUrl, user);
+  create(dto: CreateUserDto): Observable<User> {
+    return this.http.post<User>(this.apiUrl, dto);
   }
 
-  update(
-    id: number,
-    user: Partial<{
-      password?: string;
-      fullName?: string;
-      role?: UserRole;
-      isActive?: boolean;
-      companyId?: number;
-    }>,
-  ): Observable<User> {
-    return this.http.patch<User>(`${this.apiUrl}/${id}`, user);
+  update(id: number, dto: UpdateUserDto): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/${id}`, dto);
   }
 
   delete(id: number): Observable<void> {

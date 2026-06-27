@@ -1,0 +1,99 @@
+<div class="roles-page">
+  <div class="page-header">
+    <h2>🔐 Gestione Ruoli</h2>
+    @if (canCreate()) {
+    <button class="btn btn-primary" (click)="openCreate()">+ Nuovo Ruolo</button>
+    }
+  </div>
+
+  @if (loading()) {
+  <div class="loading">Caricamento...</div>
+  } @else {
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Descrizione</th>
+          <th>Permessi</th>
+          <th>Utenti</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (role of roles(); track role.id) {
+        <tr>
+          <td class="role-name">{{ role.name }}</td>
+          <td>{{ role.description || '-' }}</td>
+          <td>
+            <div class="perm-badges">
+              @for (perm of role.permissions.slice(0, 3); track perm) {
+              <span class="badge">{{ perm }}</span>
+              }
+              @if (role.permissions.length > 3) {
+              <span class="badge badge-more">+{{ role.permissions.length - 3 }}</span>
+              }
+            </div>
+          </td>
+          <td>{{ role._count?.users ?? 0 }}</td>
+          <td class="actions">
+            @if (canUpdate()) {
+            <button class="btn btn-sm" (click)="openEdit(role)">✏️</button>
+            }
+            @if (canDelete()) {
+            <button class="btn btn-sm btn-danger" (click)="deleteRole(role.id)">🗑️</button>
+            }
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="5" class="empty">Nessun ruolo trovato</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (showForm()) {
+  <div class="form-overlay" (click)="closeForm()">
+    <div class="form-panel" (click)="$event.stopPropagation()">
+      <h3>{{ editingRoleId() ? 'Modifica Ruolo' : 'Nuovo Ruolo' }}</h3>
+
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" [value]="formName()" (input)="formName.set($any($event.target).value)"
+          placeholder="es. Cassiere, Manager..." />
+      </div>
+
+      <div class="form-group">
+        <label>Descrizione</label>
+        <input type="text" [value]="formDescription()" (input)="formDescription.set($any($event.target).value)"
+          placeholder="Opzionale" />
+      </div>
+
+      <div class="permissions-section">
+        <h4>Permessi</h4>
+        @for (group of permissionGroups(); track group.category) {
+        <div class="permission-group">
+          <h5>{{ group.category }}</h5>
+          <div class="checkbox-grid">
+            @for (perm of group.permissions; track perm) {
+            <label class="checkbox-label">
+              <input type="checkbox" [checked]="isChecked(perm)" (change)="togglePermission(perm)" />
+              <span>{{ perm }}</span>
+            </label>
+            }
+          </div>
+        </div>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" (click)="saveRole()">💾 Salva</button>
+        <button class="btn" (click)="closeForm()">Annulla</button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

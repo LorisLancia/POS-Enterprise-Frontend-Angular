@@ -36,6 +36,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'roles',
+        loadComponent: () =>
+          import('./features/roles/roles.component').then((m) => m.RolesComponent),
+      },
+      {
         path: 'modifier-groups',
         loadComponent: () =>
           import('./features/modifier-groups/modifier-groups.component').then(

@@ -1,158 +1,175 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsersService } from '../../core/services/users.service';
-import { User, UserRole } from '../../core/models/user.model';
+import { RolesService } from '../../core/services/roles.service';
+import { ToastService } from '../../core/services/toast.service';
+import { User, Role } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-users',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './users.component.html',
-  styleUrl: './users.component.scss',
+  styleUrls: ['./users.component.scss'],
 })
 export class UsersComponent implements OnInit {
-  users = signal<User[]>([]);
-  loading = signal(false);
-  error = signal('');
+  private usersService = inject(UsersService);
+  private rolesService = inject(RolesService);
+  private toast = inject(ToastService);
 
-  editingUser = signal<Partial<User> | null>(null);
+  users = signal<User[]>([]);
+  roles = signal<Role[]>([]);
+  loading = signal(false);
+
+  editingUserId = signal<number | null>(null);
   showForm = signal(false);
 
-  formData = {
-    username: '',
-    password: '',
-    fullName: '',
-    role: 'CASHIER' as UserRole,
-    isActive: true,
-    companyId: 1,
-  };
+  formUsername = signal('');
+  formPassword = signal('');
+  formFullName = signal('');
+  formRoleId = signal<number>(0);
+  formCompanyId = signal(1);
+  formIsActive = signal(true);
 
-  isEditing = computed(() => this.editingUser() !== null);
-  roles: UserRole[] = ['ADMIN', 'MANAGER', 'CASHIER'];
-
-  constructor(private usersService: UsersService) {}
+  isEditing = computed(() => this.editingUserId() !== null);
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadRoles();
   }
 
   loadUsers(): void {
     this.loading.set(true);
-    this.error.set('');
     this.usersService.getAll().subscribe({
-      next: (data: User[]) => {
+      next: (data) => {
         this.users.set(data);
         this.loading.set(false);
       },
-      error: (err: any) => {
-        this.error.set('Error loading users: ' + (err.message || 'Unknown error'));
+      error: () => {
+        this.toast.error('Errore caricamento utenti');
         this.loading.set(false);
       },
     });
   }
 
-  refresh(): void {
-    this.loadUsers();
+  loadRoles(): void {
+    this.rolesService.getRoles().subscribe({
+      next: (data) => {
+        this.roles.set(data);
+        // Se nessun ruolo selezionato, pre-seleziona il primo
+        if (this.formRoleId() === 0 && data.length > 0) {
+          this.formRoleId.set(data[0].id);
+        }
+      },
+      error: () => this.toast.error('Errore caricamento ruoli'),
+    });
   }
 
   openCreateForm(): void {
-    this.editingUser.set(null);
-    this.formData = {
-      username: '',
-      password: '',
-      fullName: '',
-      role: 'CASHIER',
-      isActive: true,
-      companyId: 1,
-    };
+    this.editingUserId.set(null);
+    this.formUsername.set('');
+    this.formPassword.set('');
+    this.formFullName.set('');
+    this.formRoleId.set(this.roles()[0]?.id ?? 0);
+    this.formCompanyId.set(1);
+    this.formIsActive.set(true);
     this.showForm.set(true);
   }
 
   openEditForm(user: User): void {
-    this.editingUser.set(user);
-    this.formData = {
-      username: user.username,
-      password: '',
-      fullName: user.fullName,
-      role: user.role.name as UserRole,
-      isActive: user.isActive,
-      companyId: user.companyId,
-    };
+    this.editingUserId.set(user.id);
+    this.formUsername.set(user.username);
+    this.formPassword.set('');
+    this.formFullName.set(user.fullName);
+    this.formRoleId.set(user.roleId);
+    this.formCompanyId.set(user.companyId);
+    this.formIsActive.set(user.isActive);
     this.showForm.set(true);
   }
 
   closeForm(): void {
     this.showForm.set(false);
-    this.editingUser.set(null);
+    this.editingUserId.set(null);
   }
 
   saveUser(): void {
-    if (
-      !this.formData.username ||
-      !this.formData.fullName ||
-      (!this.isEditing() && !this.formData.password)
-    ) {
-      this.error.set('Username, full name and password are required');
+    const username = this.formUsername().trim();
+    const fullName = this.formFullName().trim();
+    const roleId = this.formRoleId();
+    const password = this.formPassword();
+
+    if (!username || !fullName || (!this.isEditing() && !password)) {
+      this.toast.warning('Username, nome completo e password sono obbligatori');
+      return;
+    }
+
+    if (!roleId) {
+      this.toast.warning('Seleziona un ruolo');
       return;
     }
 
     this.loading.set(true);
-    if (this.isEditing() && this.editingUser()?.id) {
-      const payload: any = {
-        fullName: this.formData.fullName,
-        role: this.formData.role,
-        isActive: this.formData.isActive,
-        companyId: this.formData.companyId,
-      };
-      if (this.formData.password) payload.password = this.formData.password;
+    const id = this.editingUserId();
 
-      this.usersService.update(this.editingUser()!.id!, payload).subscribe({
+    if (id) {
+      const payload: any = {
+        fullName,
+        roleId,
+        isActive: this.formIsActive(),
+        companyId: this.formCompanyId(),
+      };
+      if (password) payload.password = password;
+
+      this.usersService.update(id, payload).subscribe({
         next: () => {
+          this.toast.success('Utente aggiornato');
           this.loading.set(false);
           this.loadUsers();
           this.closeForm();
         },
         error: (err: any) => {
+          this.toast.error(err.error?.message || 'Errore aggiornamento utente');
           this.loading.set(false);
-          this.error.set('Error updating: ' + err.message);
         },
       });
     } else {
       this.usersService
         .create({
-          username: this.formData.username,
-          password: this.formData.password,
-          fullName: this.formData.fullName,
-          role: this.formData.role,
-          isActive: this.formData.isActive,
-          companyId: this.formData.companyId,
+          username,
+          password,
+          fullName,
+          roleId,
+          companyId: this.formCompanyId(),
+          isActive: this.formIsActive(),
         })
         .subscribe({
           next: () => {
+            this.toast.success('Utente creato');
             this.loading.set(false);
             this.loadUsers();
             this.closeForm();
           },
           error: (err: any) => {
+            this.toast.error(err.error?.message || 'Errore creazione utente');
             this.loading.set(false);
-            this.error.set('Error creating: ' + err.message);
           },
         });
     }
   }
 
   deleteUser(id: number): void {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!confirm('Sei sicuro di voler eliminare questo utente?')) return;
     this.loading.set(true);
     this.usersService.delete(id).subscribe({
       next: () => {
+        this.toast.success('Utente eliminato');
         this.loading.set(false);
         this.loadUsers();
       },
       error: (err: any) => {
+        this.toast.error(err.error?.message || 'Errore eliminazione utente');
         this.loading.set(false);
-        this.error.set('Error deleting: ' + err.message);
       },
     });
   }

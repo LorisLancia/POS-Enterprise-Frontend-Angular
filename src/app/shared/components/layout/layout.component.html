@@ -1,26 +1,34 @@
-<div class="layout" [class.sidebar-closed]="!sidebarOpen">
-  <aside class="sidebar">
-    <div class="logo">POS Enterprise</div>
-    <nav class="menu">
-      <a *ngFor="let item of menuItems" [routerLink]="item.route" routerLinkActive="active" class="menu-item">
-        <span class="icon">{{item.icon}}</span>
-        <span class="label">{{item.label}}</span>
+<div class="layout">
+  <aside class="sidebar" [class.closed]="!sidebarOpen">
+    <div class="sidebar-header">
+      <h2>POS Enterprise</h2>
+      <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (item of menuItems; track item.route) {
+      <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+        <span class="icon">{{ item.icon }}</span>
+        <span class="label">{{ item.label }}</span>
       </a>
+      }
     </nav>
+
+    <div class="sidebar-footer">
+      @if (user$ | async; as u) {
+      <div class="user-info">
+        <span class="user-name">{{ u.full_name }}</span>
+        <span class="user-role">{{ u.role }}</span>
+      </div>
+      }
+      <button class="logout-btn" (click)="logout()">🚪 Logout</button>
+    </div>
   </aside>
 
-  <div class="main">
-    <header class="topbar">
-      <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
-      <span class="title">Backoffice</span>
-      <div class="user-info">
-        <span *ngIf="user$ | async as user">{{user.full_name}} ({{user.role}})</span>
-        <button class="logout-btn" (click)="logout()">Logout</button>
-      </div>
-    </header>
-
-    <main class="content">
-      <router-outlet></router-outlet>
-    </main>
-  </div>
+  <main class="main-content" [class.expanded]="!sidebarOpen">
+    <router-outlet></router-outlet>
+  </main>
 </div>
+
+<!-- Toast globali -->
+<app-toast></app-toast>
