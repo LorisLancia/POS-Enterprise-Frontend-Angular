@@ -1,0 +1,90 @@
+## Product Categories
+
+@if (error()) {
+<div class="error">{{ error() }}</div>
+}
+
+<div class="actions">
+  <button (click)="openCreateForm()">+ New Category</button>
+  <button (click)="loadCategories()">Refresh</button>
+</div>
+
+@if (showForm()) {
+<div class="form-overlay">
+  <div class="form-panel">
+    <h3>{{ isEditing() ? 'Edit Category' : 'New Category' }}</h3>
+
+    <label>Name *</label>
+    <input type="text" [ngModel]="formName()" (ngModelChange)="formName.set($event)" />
+
+    <label>Parent Category</label>
+    <select [ngModel]="formParentId()" (ngModelChange)="formParentId.set($event ? +$event : null)">
+      <option [ngValue]="null">-- Root (no parent) --</option>
+      @for (cat of getFlatCategories(editingCategory()?.id); track cat.id) {
+      <option [ngValue]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+
+    <label>Color</label>
+    <input type="color" [ngModel]="formColor()" (ngModelChange)="formColor.set($event)" />
+
+    <label>Sort Order</label>
+    <input type="number" [ngModel]="formSortOrder()" (ngModelChange)="formSortOrder.set(+$event)" />
+
+    <div class="form-actions">
+      <button (click)="saveCategory()" [disabled]="loading()">Save</button>
+      <button (click)="closeForm()">Cancel</button>
+    </div>
+  </div>
+</div>
+}
+
+@if (loading() && !showForm()) {
+<p>Loading...</p>
+}
+
+@if (hasCategories()) {
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Color</th>
+      <th>Sort</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (cat of categories(); track cat.id) {
+    <ng-container *ngTemplateOutlet="categoryRow; context: { $implicit: cat, depth: 0 }"></ng-container>
+    }
+  </tbody>
+</table>
+} @else if (!loading()) {
+<p>No categories found.</p>
+}
+
+<ng-template #categoryRow let-cat let-depth="depth">
+  <tr>
+    <td>
+      <span class="indent" [style.padding-left.px]="depth * 24"></span>
+      @if (cat.children && cat.children.length > 0) {
+      <span class="tree-icon">📁</span>
+      } @else {
+      <span class="tree-icon">📄</span>
+      }
+      <span class="color-dot" [style.background-color]="cat.color || '#ccc'"></span>
+      {{ cat.name }}
+    </td>
+    <td>{{ cat.color || '-' }}</td>
+    <td>{{ cat.sortOrder }}</td>
+    <td>
+      <button (click)="openEditForm(cat)">Edit</button>
+      <button (click)="deleteCategory(cat.id)">Delete</button>
+    </td>
+  </tr>
+  @if (cat.children && cat.children.length > 0) {
+  @for (child of cat.children; track child.id) {
+  <ng-container *ngTemplateOutlet="categoryRow; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+  }
+  }
+</ng-template>

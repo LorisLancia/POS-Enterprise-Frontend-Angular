@@ -3,13 +3,15 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductsService } from '../../core/services/products.service';
-import {
-  ProductCategoriesService,
-  ProductCategory,
-} from '../../core/services/product-categories.service';
+import { ProductCategoriesService } from '../../core/services/product-categories.service';
 import { MaterialsService } from '../../core/services/materials.service';
 import { Material } from '../../core/models/material.model';
-import { Product, ModifierGroup, STANDARD_UNITS } from '../../core/models/product.model';
+import {
+  Product,
+  ModifierGroup,
+  STANDARD_UNITS,
+  ProductCategory,
+} from '../../core/models/product.model';
 
 type RecipeUnit = 'ML' | 'L' | 'G' | 'KG' | 'PC' | 'PK';
 
@@ -285,5 +287,18 @@ export class ProductsComponent implements OnInit {
 
   getUnitLabel(unit: string): string {
     return this.standardUnits.find((u) => u.value === unit)?.label || unit;
+  }
+
+  // Ritorna categorie flat per dropdown (indentate per gerarchia)
+  getFlatCategories(): ProductCategory[] {
+    const result: ProductCategory[] = [];
+    const walk = (cats: ProductCategory[], depth: number) => {
+      for (const cat of cats) {
+        result.push({ ...cat, name: '  '.repeat(depth) + cat.name });
+        if (cat.children) walk(cat.children, depth + 1);
+      }
+    };
+    walk(this.categories(), 0);
+    return result;
   }
 }

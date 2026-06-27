@@ -98,10 +98,15 @@ export interface Product {
 export interface ProductCategory {
   id: number;
   companyId: number;
+  parentId: number | null;
   name: string;
   color: string | null;
   sortOrder: number;
   isActive: boolean;
+  children?: ProductCategory[];
+  parent?: ProductCategory;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Standard units for dropdowns

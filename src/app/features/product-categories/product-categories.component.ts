@@ -1,29 +1,28 @@
-// src/app/features/categories/categories.component.ts
+// src/app/features/product-categories/product-categories.component.ts
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  ProductCategoriesService,
-  ProductCategory,
-} from '../../core/services/product-categories.service';
+import { ProductCategoriesService } from '../../core/services/product-categories.service';
+import { ProductCategory } from '../../core/models/product.model';
 
 @Component({
-  selector: 'app-categories',
+  selector: 'app-product-categories',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './categories.component.html',
-  styleUrl: './categories.component.scss',
+  templateUrl: './product-categories.component.html',
+  styleUrl: './product-categories.component.scss',
 })
-export class CategoriesComponent implements OnInit {
+export class ProductCategoriesComponent implements OnInit {
   categories = signal<ProductCategory[]>([]);
-  loading = signal(false);
-  error = signal('');
-  showForm = signal(false);
+  loading = signal<boolean>(false);
+  error = signal<string>('');
+  showForm = signal<boolean>(false);
   editingCategory = signal<ProductCategory | null>(null);
 
-  formName = signal('');
-  formColor = signal('');
-  formSortOrder = signal(0);
+  formName = signal<string>('');
+  formColor = signal<string>('#3b82f6');
+  formSortOrder = signal<number>(0);
+  formParentId = signal<number | null>(null);
 
   hasCategories = computed(() => this.categories().length > 0);
   isEditing = computed(() => this.editingCategory() !== null);
@@ -38,12 +37,12 @@ export class CategoriesComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.categoriesService.getAll().subscribe({
-      next: (data) => {
+      next: (data: ProductCategory[]) => {
         this.categories.set(data);
         this.loading.set(false);
       },
-      error: (err) => {
-        this.error.set('Error loading categories: ' + (err.message || 'Unknown'));
+      error: (err: any) => {
+        this.error.set('Error: ' + (err.message || 'Unknown'));
         this.loading.set(false);
       },
     });
@@ -52,16 +51,18 @@ export class CategoriesComponent implements OnInit {
   openCreateForm(): void {
     this.editingCategory.set(null);
     this.formName.set('');
-    this.formColor.set('');
+    this.formColor.set('#3b82f6');
     this.formSortOrder.set(0);
+    this.formParentId.set(null);
     this.showForm.set(true);
   }
 
-  openEditForm(category: ProductCategory): void {
-    this.editingCategory.set(category);
-    this.formName.set(category.name);
-    this.formColor.set(category.color || '');
-    this.formSortOrder.set(category.sortOrder);
+  openEditForm(cat: ProductCategory): void {
+    this.editingCategory.set(cat);
+    this.formName.set(cat.name);
+    this.formColor.set(cat.color || '#3b82f6');
+    this.formSortOrder.set(cat.sortOrder);
+    this.formParentId.set(cat.parentId);
     this.showForm.set(true);
   }
 
@@ -79,8 +80,9 @@ export class CategoriesComponent implements OnInit {
     this.loading.set(true);
     const dto = {
       name: this.formName(),
-      color: this.formColor() || undefined,
-      sortOrder: this.formSortOrder() || undefined,
+      color: this.formColor(),
+      sortOrder: this.formSortOrder(),
+      parentId: this.formParentId(),
     };
 
     const op =
@@ -102,7 +104,7 @@ export class CategoriesComponent implements OnInit {
   }
 
   deleteCategory(id: number): void {
-    if (!confirm('Delete this category?')) return;
+    if (!confirm('Delete this category and all its children?')) return;
     this.loading.set(true);
     this.categoriesService.delete(id).subscribe({
       next: () => {
@@ -114,5 +116,20 @@ export class CategoriesComponent implements OnInit {
         this.error.set('Error deleting: ' + err.message);
       },
     });
+  }
+
+  // Ritorna tutte le categorie flat per il dropdown parent (esclude se stessa e discendenti)
+  getFlatCategories(excludeId?: number): ProductCategory[] {
+    const result: ProductCategory[] = [];
+    const walk = (cats: ProductCategory[], depth: number) => {
+      for (const cat of cats) {
+        if (cat.id !== excludeId) {
+          result.push({ ...cat, name: '  '.repeat(depth) + cat.name });
+          if (cat.children) walk(cat.children, depth + 1);
+        }
+      }
+    };
+    walk(this.categories(), 0);
+    return result;
   }
 }

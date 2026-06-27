@@ -43,7 +43,9 @@ export const routes: Routes = [
       {
         path: 'categories',
         loadComponent: () =>
-          import('./features/categories/categories.component').then((m) => m.CategoriesComponent),
+          import('./features/product-categories/product-categories.component').then(
+            (m) => m.ProductCategoriesComponent,
+          ),
       },
       {
         path: 'materials',

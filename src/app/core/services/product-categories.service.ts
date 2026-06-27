@@ -2,26 +2,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface ProductCategory {
-  id: number;
-  companyId: number;
-  name: string;
-  color: string | null;
-  sortOrder: number;
-  isActive: boolean;
-}
+import { ProductCategory } from '../models/product.model';
 
 export interface CreateProductCategoryDto {
   name: string;
   color?: string;
   sortOrder?: number;
+  parentId?: number | null;
 }
 
 export interface UpdateProductCategoryDto {
   name?: string;
   color?: string;
   sortOrder?: number;
+  parentId?: number | null;
   isActive?: boolean;
 }
 
@@ -43,7 +37,7 @@ export class ProductCategoriesService {
     return this.http.patch<ProductCategory>(`${this.apiUrl}/${id}`, dto);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  delete(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }
