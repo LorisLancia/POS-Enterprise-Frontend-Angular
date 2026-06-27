@@ -1,0 +1,98 @@
+<div class="page-header">
+  <h2>Modifier Groups</h2>
+  <button class="btn-primary" (click)="openForm()">+ New Group</button>
+</div>
+
+@if (error()) {
+<div class="error-banner">{{ error() }}</div>
+}
+
+@if (showForm()) {
+<div class="form-overlay" (click)="closeForm()">
+  <div class="form-panel" (click)="$event.stopPropagation()">
+    <h3>New Modifier Group</h3>
+
+    <div class="form-group">
+      <label>Name *</label>
+      <input type="text" [(ngModel)]="formData.name" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Selection Type</label>
+        <select [(ngModel)]="formData.selectionType">
+          <option value="single">Single</option>
+          <option value="multiple">Multiple</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Min Select</label>
+        <input type="number" [(ngModel)]="formData.minSelect" />
+      </div>
+      <div class="form-group">
+        <label>Max Select</label>
+        <input type="number" [(ngModel)]="formData.maxSelect" />
+      </div>
+    </div>
+
+    <h4>Options</h4>
+    <button class="btn-small" (click)="addOption()">+ Add Option</button>
+
+    @for (option of formData.options; track $index) {
+    <div class="option-row">
+      <input type="text" placeholder="Name" [(ngModel)]="option.name" />
+      <input type="number" placeholder="Price Adj" [(ngModel)]="option.priceAdjustment" />
+      <select [(ngModel)]="option.materialId">
+        <option [ngValue]="0">-- No Material --</option>
+        @for (mat of materials(); track mat.id) {
+        <option [ngValue]="mat.id">{{ mat.name }}</option>
+        }
+      </select>
+      <input type="number" placeholder="Qty Consumed" [(ngModel)]="option.quantityConsumed" />
+      <select [(ngModel)]="option.unit">
+        @for (u of standardUnits; track u.value) {
+        <option [ngValue]="u.value">{{ u.label }}</option>
+        }
+      </select>
+      <button class="btn-danger" (click)="removeOption($index)">Remove</button>
+    </div>
+    }
+
+    <div class="form-actions">
+      <button class="btn-primary" (click)="saveGroup()" [disabled]="loading()">Save</button>
+      <button class="btn-secondary" (click)="closeForm()">Cancel</button>
+    </div>
+  </div>
+</div>
+}
+
+@if (loading() && !showForm()) {
+<p class="loading">Loading...</p>
+}
+
+@for (group of groups(); track group.id) {
+<div class="group-card">
+  <div class="group-header">
+    <h4>{{ group.name }}</h4>
+    <span class="badge">{{ group.selectionType }} | min {{ group.minSelect }} | max {{ group.maxSelect }}</span>
+    <button class="btn-danger" (click)="deleteGroup(group.id)">Delete</button>
+  </div>
+  <div class="options-list">
+    @for (opt of group.options; track opt.id) {
+    <div class="option-item">
+      <span class="opt-name">{{ opt.name }}</span>
+      <span class="opt-price" [class.free]="!opt.priceAdjustment">
+        {{ opt.priceAdjustment ? '+' + opt.priceAdjustment : 'Free' }}
+      </span>
+      @if (opt.material) {
+      <span class="opt-material">
+        Consumes: {{ opt.quantityConsumed }} {{ opt.unit }} of {{ opt.material.name }}
+      </span>
+      }
+    </div>
+    }
+  </div>
+</div>
+} @empty {
+<p class="empty">No modifier groups found.</p>
+}

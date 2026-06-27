@@ -36,6 +36,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'modifier-groups',
+        loadComponent: () =>
+          import('./features/modifier-groups/modifier-groups.component').then(
+            (m) => m.ModifierGroupsComponent,
+          ),
+      },
+      {
         path: 'products',
         loadComponent: () =>
           import('./features/products/products.component').then((m) => m.ProductsComponent),

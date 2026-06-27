@@ -19,6 +19,7 @@ export class LayoutComponent {
     { label: 'Company', icon: '🏢', route: '/company' },
     { label: 'Warehouses', icon: '🏭', route: '/warehouses' },
     { label: 'POS Clients', icon: '🖥️', route: '/pos-clients' },
+    { label: 'Modifier Groups', icon: '🏷️', route: '/modifier-groups' },
     { label: 'Materials', icon: '🏷️', route: '/materials' },
     { label: 'Products', icon: '📦', route: '/products' },
     { label: 'Categories', icon: '🏷️', route: '/categories' },

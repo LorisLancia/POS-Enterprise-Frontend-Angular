@@ -1,4 +1,4 @@
-// src/app/core/models/product.model.ts
+import { Material } from './material.model';
 
 export interface ProductVariant {
   id: number;
@@ -29,6 +29,8 @@ export interface ModifierOption {
   materialId: number | null;
   quantityConsumed: number | null;
   isActive: boolean;
+  material?: Material; // ← AGGIUNGI QUESTA RIGA
+  unit: 'ML' | 'L' | 'G' | 'KG' | 'PC' | 'PK' | null; // ← AGGIUNGI
 }
 
 export interface ModifierGroup {
