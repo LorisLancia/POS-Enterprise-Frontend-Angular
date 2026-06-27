@@ -10,6 +10,7 @@ import { ModifierGroup } from '../models/product.model';
 })
 export class ProductsService {
   private apiUrl = 'http://localhost:3000/products';
+  private apiUrl2 = 'http://localhost:3000/';
 
   constructor(private http: HttpClient) {}
 
@@ -34,6 +35,6 @@ export class ProductsService {
   }
 
   getModifierGroups(): Observable<ModifierGroup[]> {
-    return this.http.get<ModifierGroup[]>(`${this.apiUrl}/modifier-groups`);
+    return this.http.get<ModifierGroup[]>(`${this.apiUrl2}/modifier-groups`);
   }
 }

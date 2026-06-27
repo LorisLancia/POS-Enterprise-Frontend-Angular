@@ -106,6 +106,38 @@
     <p>No modifier groups available.</p>
     }
     }
+    <!-- Addon Section -->
+    <div class="addon-section">
+      <h4>Addon Groups</h4>
+      <button type="button" (click)="addAddon()">+ Aggiungi Gruppo Addon</button>
+
+      @for (addon of formAddons(); track $index) {
+      <div class="addon-group">
+        <input type="text" [(ngModel)]="addon.name" placeholder="Nome gruppo addon">
+        <input type="number" [(ngModel)]="addon.maxQuantity" placeholder="Max qty (0=illimitato)">
+        <input type="number" [(ngModel)]="addon.sortOrder" placeholder="Ordine">
+        <button type="button" (click)="removeAddon($index)">Rimuovi Gruppo</button>
+
+        <h5>Items</h5>
+        <button type="button" (click)="addAddonItem($index)">+ Aggiungi Item</button>
+
+        @for (item of addon.items; track $index) {
+        <div class="addon-item">
+          <select [(ngModel)]="item.addonProductId">
+            <option [ngValue]="0">-- Seleziona prodotto --</option>
+            @for (p of products(); track p.id) {
+            <option [ngValue]="p.id">{{ p.name }}</option>
+            }
+          </select>
+          <input type="number" [(ngModel)]="item.quantityValue" placeholder="Qty Value" step="0.01">
+          <input type="number" [(ngModel)]="item.price" placeholder="Prezzo (vuoto = prezzo prodotto)" step="0.01">
+          <input type="number" [(ngModel)]="item.sortOrder" placeholder="Ordine">
+          <button type="button" (click)="removeAddonItem($index, $index)">Rimuovi</button>
+        </div>
+        }
+      </div>
+      }
+    </div>
 
     <div class="form-actions">
       <button (click)="saveProduct()" [disabled]="loading()">Save</button>

@@ -56,6 +56,7 @@ export interface ProductAddonItem {
   addonId: number;
   addonProductId: number;
   quantityValue: number;
+  price?: number;
   sortOrder: number;
   isActive: boolean;
   addonProduct?: Product;
