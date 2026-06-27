@@ -14,6 +14,24 @@ const STANDARD_UNITS: { value: MaterialUnit['unit']; label: string }[] = [
   { value: 'PK', label: 'Pack (pk)' },
 ];
 
+// DTO che il backend si aspetta (class-validator)
+interface MaterialUnitDto {
+  unit: MaterialUnit['unit'];
+  quantity: string;
+  isDefault?: boolean;
+  isPurchaseUnit?: boolean;
+  isSaleUnit?: boolean;
+}
+
+interface CreateMaterialDto {
+  name: string;
+  description?: string;
+  category?: string;
+  minStock?: string;
+  isActive?: boolean;
+  units: MaterialUnitDto[];
+}
+
 @Component({
   selector: 'app-materials',
   standalone: true,
@@ -23,20 +41,18 @@ const STANDARD_UNITS: { value: MaterialUnit['unit']; label: string }[] = [
 })
 export class MaterialsComponent implements OnInit {
   materials = signal<Material[]>([]);
-  loading = signal(false);
-  error = signal('');
-  showForm = signal(false);
+  loading = signal<boolean>(false);
+  error = signal<string>('');
+  showForm = signal<boolean>(false);
   editingMaterial = signal<Material | null>(null);
 
-  // Form fields
-  formName = signal('');
-  formDescription = signal('');
-  formCategory = signal('');
-  formNewCategory = signal('');
-  formMinStockLevel = signal(0);
-  formIsActive = signal(true);
+  formName = signal<string>('');
+  formDescription = signal<string>('');
+  formCategory = signal<string>('');
+  formNewCategory = signal<string>('');
+  formMinStock = signal<number>(0);
+  formIsActive = signal<boolean>(true);
 
-  // Unit management
   formUnits = signal<MaterialUnit[]>([]);
 
   existingCategories = computed(() => {
@@ -61,15 +77,19 @@ export class MaterialsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.materialsService.getAll().subscribe({
-      next: (data) => {
+      next: (data: Material[]) => {
         this.materials.set(data);
         this.loading.set(false);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.error.set('Error: ' + (err.message || 'Unknown'));
         this.loading.set(false);
       },
     });
+  }
+
+  refresh(): void {
+    this.loadMaterials();
   }
 
   openCreateForm(): void {
@@ -78,7 +98,7 @@ export class MaterialsComponent implements OnInit {
     this.formDescription.set('');
     this.formCategory.set('');
     this.formNewCategory.set('');
-    this.formMinStockLevel.set(0);
+    this.formMinStock.set(0);
     this.formIsActive.set(true);
     this.formUnits.set([]);
     this.showForm.set(true);
@@ -88,7 +108,7 @@ export class MaterialsComponent implements OnInit {
     this.editingMaterial.set(mat);
     this.formName.set(mat.name);
     this.formDescription.set(mat.description || '');
-    this.formMinStockLevel.set(mat.minStockLevel || 0);
+    this.formMinStock.set(mat.minStock || 0);
     this.formIsActive.set(mat.isActive);
 
     const existing = this.existingCategories();
@@ -103,7 +123,6 @@ export class MaterialsComponent implements OnInit {
       this.formNewCategory.set('');
     }
 
-    // Carica le unità esistenti
     this.formUnits.set(mat.units?.map((u) => ({ ...u })) || []);
     this.showForm.set(true);
   }
@@ -113,7 +132,6 @@ export class MaterialsComponent implements OnInit {
     this.editingMaterial.set(null);
   }
 
-  // Unit management
   addUnit(): void {
     this.formUnits.update((units) => [
       ...units,
@@ -174,7 +192,6 @@ export class MaterialsComponent implements OnInit {
       return;
     }
 
-    // Verifica che ci sia almeno una unità default
     const hasDefault = this.formUnits().some((u) => u.isDefault);
     if (!hasDefault) {
       this.error.set('At least one unit must be marked as Default');
@@ -185,15 +202,16 @@ export class MaterialsComponent implements OnInit {
       this.formCategory() === '__new__' ? this.formNewCategory() : this.formCategory();
 
     this.loading.set(true);
-    const dto = {
+
+    const dto: CreateMaterialDto = {
       name: this.formName(),
       description: this.formDescription(),
       category: categoryValue || '',
-      minStock: this.formMinStockLevel() || 0,
+      minStock: String(this.formMinStock() || 0),
       isActive: this.formIsActive(),
       units: this.formUnits().map((u) => ({
         unit: u.unit,
-        quantity: u.quantity,
+        quantity: String(u.quantity),
         isDefault: u.isDefault,
         isPurchaseUnit: u.isPurchaseUnit,
         isSaleUnit: u.isSaleUnit,
@@ -202,8 +220,8 @@ export class MaterialsComponent implements OnInit {
 
     const op =
       this.isEditing() && this.editingMaterial()
-        ? this.materialsService.update(this.editingMaterial()!.id, dto)
-        : this.materialsService.create(dto);
+        ? this.materialsService.update(this.editingMaterial()!.id, dto as any)
+        : this.materialsService.create(dto as any);
 
     op.subscribe({
       next: () => {
@@ -211,7 +229,7 @@ export class MaterialsComponent implements OnInit {
         this.loadMaterials();
         this.closeForm();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.loading.set(false);
         this.error.set('Error: ' + (err.message || 'Unknown'));
       },
@@ -226,7 +244,7 @@ export class MaterialsComponent implements OnInit {
         this.loading.set(false);
         this.loadMaterials();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.loading.set(false);
         this.error.set('Error deleting: ' + err.message);
       },

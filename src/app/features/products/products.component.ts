@@ -11,6 +11,8 @@ import { MaterialsService } from '../../core/services/materials.service';
 import { Material } from '../../core/models/material.model';
 import { Product, ModifierGroup, STANDARD_UNITS } from '../../core/models/product.model';
 
+type RecipeUnit = 'ML' | 'L' | 'G' | 'KG' | 'PC' | 'PK';
+
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -23,11 +25,11 @@ export class ProductsComponent implements OnInit {
   categories = signal<ProductCategory[]>([]);
   materials = signal<Material[]>([]);
   modifierGroups = signal<ModifierGroup[]>([]);
-  loading = signal(false);
-  error = signal('');
+  loading = signal<boolean>(false);
+  error = signal<string>('');
 
   editingProduct = signal<Product | null>(null);
-  showForm = signal(false);
+  showForm = signal<boolean>(false);
 
   formData: Partial<Product> = {
     name: '',
@@ -48,11 +50,7 @@ export class ProductsComponent implements OnInit {
     {
       materialId: number;
       quantity: number;
-      unit: Product['recipes'] extends (infer R)[]
-        ? R extends { unit: infer U }
-          ? U
-          : never
-        : never;
+      unit: RecipeUnit;
       wastagePercent: number;
     }[]
   >([]);

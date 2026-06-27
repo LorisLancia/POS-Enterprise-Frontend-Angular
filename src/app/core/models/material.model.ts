@@ -17,7 +17,7 @@ export interface Material {
   name: string;
   description: string;
   category: string;
-  minStockLevel: number;
+  minStock: number; // allineato al backend Prisma
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
