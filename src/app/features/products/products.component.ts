@@ -37,7 +37,6 @@ export class ProductsComponent implements OnInit {
     name: '',
     sku: '',
     basePrice: 0,
-    cost: undefined,
     categoryId: undefined,
     barcode: '',
     description: '',
@@ -47,13 +46,19 @@ export class ProductsComponent implements OnInit {
     allowDecimalQty: false,
   };
 
-  formVariants = signal<{ name: string; sku: string; priceAdjustment: number }[]>([]);
-  formRecipes = signal<
+  // Ricette sono DENTRO ogni variante — non più signal separato
+  formVariants = signal<
     {
-      materialId: number;
-      quantity: number;
-      unit: RecipeUnit;
-      wastagePercent: number;
+      id?: number;
+      name: string;
+      sku: string;
+      priceAdjustment: number;
+      recipes: {
+        materialId: number;
+        quantity: number;
+        unit: RecipeUnit;
+        wastagePercent: number;
+      }[];
     }[]
   >([]);
   formSelectedModifierIds = signal<number[]>([]);
@@ -136,7 +141,6 @@ export class ProductsComponent implements OnInit {
       name: '',
       sku: '',
       basePrice: 0,
-      cost: undefined,
       categoryId: undefined,
       barcode: '',
       description: '',
@@ -146,18 +150,41 @@ export class ProductsComponent implements OnInit {
       allowDecimalQty: false,
     };
     this.formVariants.set([]);
-    this.formRecipes.set([]);
+
     this.formSelectedModifierIds.set([]);
     this.showForm.set(true);
   }
 
   openEditForm(product: Product): void {
     this.editingProduct.set(product);
-    this.formData = { ...product };
-    this.formVariants.set([]);
-    this.formRecipes.set([]);
-    this.formSelectedModifierIds.set([]);
-    this.showForm.set(true);
+
+    // Togli cost dal formData (non esiste nel DB)
+    const { cost, ...productWithoutCost } = product as any;
+    this.formData = { ...productWithoutCost };
+
+    // Popola varianti con ricette nestate
+    this.formVariants.set(
+      product.variants?.map((v) => ({
+        id: v.id,
+        name: v.name,
+        sku: v.sku || '',
+        priceAdjustment: v.priceAdjustment,
+        recipes:
+          product.recipes
+            ?.filter((r) => r.variantId === v.id)
+            ?.map((r) => ({
+              materialId: r.materialId,
+              quantity: r.quantity,
+              unit: r.unit,
+              wastagePercent: r.wastagePercent,
+            })) || [],
+      })) || [],
+    );
+
+    // Popola modifier groups selezionati
+    this.formSelectedModifierIds.set(product.modifiers?.map((m) => m.groupId) || []);
+
+    // Popola addon groups
     this.formAddons.set(
       product.addons?.map((a) => ({
         name: a.name,
@@ -172,6 +199,8 @@ export class ProductsComponent implements OnInit {
           })) || [],
       })) || [],
     );
+
+    this.showForm.set(true);
   }
 
   closeForm(): void {
@@ -180,7 +209,7 @@ export class ProductsComponent implements OnInit {
   }
 
   addVariant(): void {
-    this.formVariants.update((v) => [...v, { name: '', sku: '', priceAdjustment: 0 }]);
+    this.formVariants.update((v) => [...v, { name: '', sku: '', priceAdjustment: 0, recipes: [] }]);
   }
   removeVariant(index: number): void {
     this.formVariants.update((v) => v.filter((_, i) => i !== index));
@@ -196,24 +225,42 @@ export class ProductsComponent implements OnInit {
       return u;
     });
   }
+  addVariantRecipe(variantIndex: number): void {
+    this.formVariants.update((v) => {
+      const u = [...v];
+      u[variantIndex] = {
+        ...u[variantIndex],
+        recipes: [
+          ...u[variantIndex].recipes,
+          { materialId: 0, quantity: 1, unit: 'ML', wastagePercent: 0 },
+        ],
+      };
+      return u;
+    });
+  }
 
-  addRecipe(): void {
-    this.formRecipes.update((r) => [
-      ...r,
-      { materialId: 0, quantity: 1, unit: 'ML', wastagePercent: 0 },
-    ]);
+  removeVariantRecipe(variantIndex: number, recipeIndex: number): void {
+    this.formVariants.update((v) => {
+      const u = [...v];
+      u[variantIndex] = {
+        ...u[variantIndex],
+        recipes: u[variantIndex].recipes.filter((_, i) => i !== recipeIndex),
+      };
+      return u;
+    });
   }
-  removeRecipe(index: number): void {
-    this.formRecipes.update((r) => r.filter((_, i) => i !== index));
-  }
-  updateRecipe(
-    index: number,
+
+  updateVariantRecipe(
+    variantIndex: number,
+    recipeIndex: number,
     field: 'materialId' | 'quantity' | 'unit' | 'wastagePercent',
     value: string | number,
   ): void {
-    this.formRecipes.update((r) => {
-      const u = [...r];
-      u[index] = { ...u[index], [field]: value };
+    this.formVariants.update((v) => {
+      const u = [...v];
+      const recipes = [...u[variantIndex].recipes];
+      recipes[recipeIndex] = { ...recipes[recipeIndex], [field]: value };
+      u[variantIndex] = { ...u[variantIndex], recipes };
       return u;
     });
   }
@@ -238,7 +285,6 @@ export class ProductsComponent implements OnInit {
       name: this.formData.name,
       sku: this.formData.sku,
       basePrice: Number(this.formData.basePrice) || 0,
-      cost: this.formData.cost ? Number(this.formData.cost) : undefined,
       categoryId: this.formData.categoryId ? Number(this.formData.categoryId) : undefined,
       barcode: this.formData.barcode || undefined,
       description: this.formData.description || undefined,
@@ -249,7 +295,41 @@ export class ProductsComponent implements OnInit {
     };
 
     if (this.isEditing() && this.editingProduct()?.id) {
-      this.productsService.update(this.editingProduct()!.id!, basePayload).subscribe({
+      const payload = {
+        ...basePayload,
+        variants: this.formVariants().map((v) => ({
+          id: v.id,
+          name: v.name,
+          sku: v.sku || undefined,
+          priceAdjustment: Number(v.priceAdjustment) || 0,
+          recipes: v.recipes
+            .filter((r) => r.materialId > 0)
+            .map((r) => ({
+              materialId: Number(r.materialId),
+              quantity: Number(r.quantity) || 1,
+              unit: r.unit,
+              wastagePercent: Number(r.wastagePercent) || 0,
+            })),
+        })),
+        modifierGroupIds: this.formSelectedModifierIds(),
+        addons: this.formAddons()
+          .filter((a) => a.name.trim())
+          .map((a) => ({
+            name: a.name,
+            maxQuantity: Number(a.maxQuantity) || 0,
+            sortOrder: Number(a.sortOrder) || 0,
+            items: a.items
+              .filter((item) => item.addonProductId > 0)
+              .map((item) => ({
+                addonProductId: Number(item.addonProductId),
+                quantityValue: Number(item.quantityValue) || 1,
+                price: item.price !== undefined ? Number(item.price) : undefined,
+                sortOrder: Number(item.sortOrder) || 0,
+              })),
+          })),
+      };
+
+      this.productsService.update(this.editingProduct()!.id!, payload).subscribe({
         next: () => {
           this.loading.set(false);
           this.loadProducts();
@@ -269,14 +349,14 @@ export class ProductsComponent implements OnInit {
             name: v.name,
             sku: v.sku || undefined,
             priceAdjustment: Number(v.priceAdjustment) || 0,
-          })),
-        recipes: this.formRecipes()
-          .filter((r) => r.materialId > 0)
-          .map((r) => ({
-            materialId: Number(r.materialId),
-            quantity: Number(r.quantity) || 1,
-            unit: r.unit,
-            wastagePercent: Number(r.wastagePercent) || 0,
+            recipes: v.recipes
+              .filter((r) => r.materialId > 0)
+              .map((r) => ({
+                materialId: Number(r.materialId),
+                quantity: Number(r.quantity) || 1,
+                unit: r.unit,
+                wastagePercent: Number(r.wastagePercent) || 0,
+              })),
           })),
         modifierGroupIds: this.formSelectedModifierIds(),
         addons: this.formAddons()
@@ -395,7 +475,7 @@ export class ProductsComponent implements OnInit {
     addonIndex: number,
     itemIndex: number,
     field: 'addonProductId' | 'quantityValue' | 'price' | 'sortOrder',
-    value: string | number,
+    value: string | number | undefined,
   ): void {
     this.formAddons.update((a) => {
       const u = [...a];

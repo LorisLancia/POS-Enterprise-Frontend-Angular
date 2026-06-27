@@ -1,154 +1,236 @@
-## Products
-
 @if (error()) {
-<div class="error">{{ error() }}</div>
+<div class="error-banner">{{ error() }}</div>
 }
 
-<div class="actions">
-  <button (click)="openCreateForm()">+ New Product</button>
-  <button (click)="refresh()">Refresh</button>
+<div class="page-header">
+  <h2>Products</h2>
+  <div class="actions">
+    <button class="btn-primary" (click)="openCreateForm()">+ New Product</button>
+    <button class="btn-secondary" (click)="refresh()">Refresh</button>
+  </div>
 </div>
 
 @if (showForm()) {
-<div class="form-overlay">
-  <div class="form-panel">
+<div class="form-overlay" (click)="closeForm()">
+  <div class="form-panel" (click)="$event.stopPropagation()">
     <h3>{{ isEditing() ? 'Edit Product' : 'New Product' }}</h3>
 
-    <label>Name *</label>
-    <input type="text" [ngModel]="formData.name" (ngModelChange)="formData.name = $event" />
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" [ngModel]="formData.name" (ngModelChange)="formData.name = $event" />
+      </div>
 
-    <label>SKU *</label>
-    <input type="text" [ngModel]="formData.sku" (ngModelChange)="formData.sku = $event" />
+      <div class="form-group">
+        <label>SKU *</label>
+        <input type="text" [ngModel]="formData.sku" (ngModelChange)="formData.sku = $event" />
+      </div>
 
-    <label>Category</label>
-    <select [ngModel]="formData.categoryId" (ngModelChange)="formData.categoryId = $event ? +$event : undefined">
-      <option [ngValue]="undefined">-- No Category --</option>
-      @for (cat of getFlatCategories(); track cat.id) {
-      <option [ngValue]="cat.id">{{ cat.name }}</option>
-      }
-    </select>
+      <div class="form-group">
+        <label>Category</label>
+        <select [ngModel]="formData.categoryId" (ngModelChange)="formData.categoryId = $event ? +$event : undefined">
+          <option [ngValue]="undefined">-- No Category --</option>
+          @for (cat of getFlatCategories(); track cat.id) {
+          <option [ngValue]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
 
-    <label>Base Price *</label>
-    <input type="number" [ngModel]="formData.basePrice" (ngModelChange)="formData.basePrice = +$event" />
+      <div class="form-group">
+        <label>Base Price *</label>
+        <input type="number" [ngModel]="formData.basePrice" (ngModelChange)="formData.basePrice = +$event" />
+      </div>
 
-    <label>Cost</label>
-    <input type="number" [ngModel]="formData.cost" (ngModelChange)="formData.cost = $event ? +$event : undefined" />
 
-    <label>Tax Rate (%)</label>
-    <input type="number" [ngModel]="formData.taxRate"
-      (ngModelChange)="formData.taxRate = $event ? +$event : undefined" />
+      <div class="form-group">
+        <label>Tax Rate (%)</label>
+        <input type="number" [ngModel]="formData.taxRate"
+          (ngModelChange)="formData.taxRate = $event ? +$event : undefined" />
+      </div>
 
-    <label>Barcode</label>
-    <input type="text" [ngModel]="formData.barcode" (ngModelChange)="formData.barcode = $event || undefined" />
+      <div class="form-group">
+        <label>Barcode</label>
+        <input type="text" [ngModel]="formData.barcode" (ngModelChange)="formData.barcode = $event || undefined" />
+      </div>
 
-    <label>Description</label>
-    <textarea [ngModel]="formData.description" (ngModelChange)="formData.description = $event || undefined"></textarea>
+      <div class="form-group full-width">
+        <label>Description</label>
+        <textarea [ngModel]="formData.description"
+          (ngModelChange)="formData.description = $event || undefined"></textarea>
+      </div>
+    </div>
 
     <div class="checkbox-row">
-      <label><input type="checkbox" [checked]="formData.isActive" (change)="formData.isActive = !formData.isActive" />
-        Active</label>
-      <label><input type="checkbox" [checked]="formData.trackInventory"
-          (change)="formData.trackInventory = !formData.trackInventory" /> Track Inventory</label>
-      <label><input type="checkbox" [checked]="formData.allowDecimalQty"
-          (change)="formData.allowDecimalQty = !formData.allowDecimalQty" /> Allow Decimal Qty</label>
+      <label class="checkbox-label">
+        <input type="checkbox" [checked]="formData.isActive" (change)="formData.isActive = !formData.isActive" />
+        Active
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" [checked]="formData.trackInventory"
+          (change)="formData.trackInventory = !formData.trackInventory" />
+        Track Inventory
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" [checked]="formData.allowDecimalQty"
+          (change)="formData.allowDecimalQty = !formData.allowDecimalQty" />
+        Allow Decimal Qty
+      </label>
     </div>
 
-    @if (!isEditing()) {
-    <h4>Variants</h4>
-    @for (variant of formVariants(); track $index) {
-    <div class="variant-row">
-      <input type="text" placeholder="Name" [ngModel]="variant.name"
-        (ngModelChange)="updateVariant($index, 'name', $event)" />
-      <input type="text" placeholder="SKU" [ngModel]="variant.sku"
-        (ngModelChange)="updateVariant($index, 'sku', $event)" />
-      <input type="number" placeholder="Price Adjustment" [ngModel]="variant.priceAdjustment"
-        (ngModelChange)="updateVariant($index, 'priceAdjustment', +$event)" />
-      <button (click)="removeVariant($index)">Remove</button>
-    </div>
-    } @empty {
-    <p>No variants added.</p>
-    }
-    <button (click)="addVariant()">+ Add Variant</button>
+    <!-- @if (!isEditing()) { -->
+    <!-- Variants -->
+    <div class="section">
+      <h4>Variants</h4>
+      @for (variant of formVariants(); track $index) {
+      <div class="variant-row">
+        <input type="text" placeholder="Name" [ngModel]="variant.name"
+          (ngModelChange)="updateVariant($index, 'name', $event)" />
+        <input type="text" placeholder="SKU" [ngModel]="variant.sku"
+          (ngModelChange)="updateVariant($index, 'sku', $event)" />
+        <input type="number" placeholder="Price Adjustment" [ngModel]="variant.priceAdjustment"
+          (ngModelChange)="updateVariant($index, 'priceAdjustment', +$event)" />
+        <button class="btn-danger" (click)="removeVariant($index)">Remove</button>
+      </div>
 
-    <h4>Recipes (BOM)</h4>
-    @for (recipe of formRecipes(); track $index) {
-    <div class="recipe-row">
-      <select [ngModel]="recipe.materialId" (ngModelChange)="updateRecipe($index, 'materialId', +$event)">
-        <option [ngValue]="0">-- Select Material --</option>
-        @for (mat of materials(); track mat.id) {
-        <option [ngValue]="mat.id">{{ mat.name }}</option>
-        }
-      </select>
-      <input type="number" placeholder="Qty" [ngModel]="recipe.quantity"
-        (ngModelChange)="updateRecipe($index, 'quantity', +$event)" />
-      <select [ngModel]="recipe.unit" (ngModelChange)="updateRecipe($index, 'unit', $event)">
-        @for (u of standardUnits; track u.value) {
-        <option [ngValue]="u.value">{{ u.label }}</option>
-        }
-      </select>
-      <input type="number" placeholder="Wastage %" [ngModel]="recipe.wastagePercent"
-        (ngModelChange)="updateRecipe($index, 'wastagePercent', +$event)" />
-      <button (click)="removeRecipe($index)">Remove</button>
-    </div>
-    } @empty {
-    <p>No recipes added.</p>
-    }
-    <button (click)="addRecipe()">+ Add Recipe</button>
+      <!-- RICETTE NESTATE DENTRO LA VARIANTE -->
+      <div class="sub-section">
+        <h5>Recipes for {{ variant.name || 'Variant ' + ($index + 1) }}</h5>
+        <button class="btn-small" (click)="addVariantRecipe($index)">+ Add Recipe</button>
 
-    <h4>Modifier Groups</h4>
-    @for (mg of modifierGroups(); track mg.id) {
-    <label class="modifier-label">
-      <input type="checkbox" [checked]="formSelectedModifierIds().includes(mg.id)"
-        (change)="toggleModifierGroup(mg.id)" />
-      {{ mg.name }} ({{ mg.selectionType }}, min {{ mg.minSelect }}, max {{ mg.maxSelect }})
-    </label>
-    } @empty {
-    <p>No modifier groups available.</p>
-    }
-    }
-    <!-- Addon Section -->
-    <div class="addon-section">
-      <h4>Addon Groups</h4>
-      <button type="button" (click)="addAddon()">+ Aggiungi Gruppo Addon</button>
-
-      @for (addon of formAddons(); track $index) {
-      <div class="addon-group">
-        <input type="text" [(ngModel)]="addon.name" placeholder="Nome gruppo addon">
-        <input type="number" [(ngModel)]="addon.maxQuantity" placeholder="Max qty (0=illimitato)">
-        <input type="number" [(ngModel)]="addon.sortOrder" placeholder="Ordine">
-        <button type="button" (click)="removeAddon($index)">Rimuovi Gruppo</button>
-
-        <h5>Items</h5>
-        <button type="button" (click)="addAddonItem($index)">+ Aggiungi Item</button>
-
-        @for (item of addon.items; track $index) {
-        <div class="addon-item">
-          <select [(ngModel)]="item.addonProductId">
-            <option [ngValue]="0">-- Seleziona prodotto --</option>
-            @for (p of products(); track p.id) {
-            <option [ngValue]="p.id">{{ p.name }}</option>
+        @for (recipe of variant.recipes; track $index) {
+        <div class="row">
+          <select [ngModel]="recipe.materialId"
+            (ngModelChange)="updateVariantRecipe($index, $index, 'materialId', +$event)">
+            <option [ngValue]="0">-- Select Material --</option>
+            @for (mat of materials(); track mat.id) {
+            <option [ngValue]="mat.id">{{ mat.name }}</option>
             }
           </select>
-          <input type="number" [(ngModel)]="item.quantityValue" placeholder="Qty Value" step="0.01">
-          <input type="number" [(ngModel)]="item.price" placeholder="Prezzo (vuoto = prezzo prodotto)" step="0.01">
-          <input type="number" [(ngModel)]="item.sortOrder" placeholder="Ordine">
-          <button type="button" (click)="removeAddonItem($index, $index)">Rimuovi</button>
+          <input type="number" placeholder="Qty" [ngModel]="recipe.quantity"
+            (ngModelChange)="updateVariantRecipe($index, $index, 'quantity', +$event)" />
+          <select [ngModel]="recipe.unit" (ngModelChange)="updateVariantRecipe($index, $index, 'unit', $event)">
+            @for (u of standardUnits; track u.value) {
+            <option [ngValue]="u.value">{{ u.label }}</option>
+            }
+          </select>
+          <input type="number" placeholder="Wastage %" [ngModel]="recipe.wastagePercent"
+            (ngModelChange)="updateVariantRecipe($index, $index, 'wastagePercent', +$event)" />
+          <button class="btn-danger" (click)="removeVariantRecipe($index, $index)">Remove</button>
         </div>
+        } @empty {
+        <p class="empty">No recipes for this variant.</p>
         }
       </div>
       }
+      <button class="btn-small" (click)="addVariant()">+ Add Variant</button>
     </div>
 
+    <!-- Recipes -->
+    <!-- <div class="section">
+      <h4>Recipes (BOM)</h4>
+      @for (recipe of formRecipes(); track $index) {
+      <div class="row">
+        <select [ngModel]="recipe.materialId" (ngModelChange)="updateRecipe($index, 'materialId', +$event)">
+          <option [ngValue]="0">-- Select Material --</option>
+          @for (mat of materials(); track mat.id) {
+          <option [ngValue]="mat.id">{{ mat.name }}</option>
+          }
+        </select>
+        <input type="number" placeholder="Qty" [ngModel]="recipe.quantity"
+          (ngModelChange)="updateRecipe($index, 'quantity', +$event)" />
+        <select [ngModel]="recipe.unit" (ngModelChange)="updateRecipe($index, 'unit', $event)">
+          @for (u of standardUnits; track u.value) {
+          <option [ngValue]="u.value">{{ u.label }}</option>
+          }
+        </select>
+        <select [ngModel]="recipe.variantId"
+          (ngModelChange)="updateRecipe($index, 'variantId', $event ? +$event : undefined)">
+          <option [ngValue]="undefined">-- Base (all variants) --</option>
+          @for (v of formVariants(); track $index) {
+          <option [ngValue]="$index + 1">{{ v.name || 'Variant ' + ($index + 1) }}</option>
+          }
+        </select>
+        <input type="number" placeholder="Wastage %" [ngModel]="recipe.wastagePercent"
+          (ngModelChange)="updateRecipe($index, 'wastagePercent', +$event)" />
+        <button class="btn-danger" (click)="removeRecipe($index)">Remove</button>
+      </div>
+      } @empty {
+      <p class="empty">No recipes added.</p>
+      }
+      <button class="btn-small" (click)="addRecipe()">+ Add Recipe</button>
+    </div> -->
+
+    <!-- Modifier Groups -->
+    <div class="section">
+      <h4>Modifier Groups</h4>
+      @for (mg of modifierGroups(); track mg.id) {
+      <label class="modifier-label">
+        <input type="checkbox" [checked]="formSelectedModifierIds().includes(mg.id)"
+          (change)="toggleModifierGroup(mg.id)" />
+        {{ mg.name }} ({{ mg.selectionType }}, min {{ mg.minSelect }}, max {{ mg.maxSelect }})
+      </label>
+      } @empty {
+      <p class="empty">No modifier groups available.</p>
+      }
+    </div>
+
+    <!-- Addon Groups -->
+    <div class="section">
+      <h4>Addon Groups</h4>
+      <button class="btn-small" (click)="addAddon()">+ Add Addon Group</button>
+
+      @for (addon of formAddons(); track $index) {
+      <div class="addon-group">
+        <div class="row">
+          <input type="text" placeholder="Group name" [ngModel]="addon.name"
+            (ngModelChange)="updateAddon($index, 'name', $event)" />
+          <input type="number" placeholder="Max qty (0=unlimited)" [ngModel]="addon.maxQuantity"
+            (ngModelChange)="updateAddon($index, 'maxQuantity', +$event)" />
+          <input type="number" placeholder="Sort order" [ngModel]="addon.sortOrder"
+            (ngModelChange)="updateAddon($index, 'sortOrder', +$event)" />
+          <button class="btn-danger" (click)="removeAddon($index)">Remove Group</button>
+        </div>
+
+        <div class="sub-section">
+          <h5>Items</h5>
+          <button class="btn-small" (click)="addAddonItem($index)">+ Add Item</button>
+
+          @for (item of addon.items; track $index) {
+          <div class="row">
+            <select [ngModel]="item.addonProductId"
+              (ngModelChange)="updateAddonItem($index, $index, 'addonProductId', +$event)">
+              <option [ngValue]="0">-- Select Product --</option>
+              @for (p of products(); track p.id) {
+              <option [ngValue]="p.id">{{ p.name }}</option>
+              }
+            </select>
+            <input type="number" placeholder="Qty Value" step="0.01" [ngModel]="item.quantityValue"
+              (ngModelChange)="updateAddonItem($index, $index, 'quantityValue', +$event)" />
+            <input type="number" placeholder="Price (empty = product price)" step="0.01" [ngModel]="item.price"
+              (ngModelChange)="updateAddonItem($index, $index, 'price', $event ? +$event : undefined)" />
+            <input type="number" placeholder="Sort" [ngModel]="item.sortOrder"
+              (ngModelChange)="updateAddonItem($index, $index, 'sortOrder', +$event)" />
+            <button class="btn-danger" (click)="removeAddonItem($index, $index)">Remove</button>
+          </div>
+          } @empty {
+          <p class="empty">No items added.</p>
+          }
+        </div>
+      </div>
+      }
+    </div>
+    <!-- } -->
+
     <div class="form-actions">
-      <button (click)="saveProduct()" [disabled]="loading()">Save</button>
-      <button (click)="closeForm()">Cancel</button>
+      <button class="btn-primary" (click)="saveProduct()" [disabled]="loading()">Save</button>
+      <button class="btn-secondary" (click)="closeForm()">Cancel</button>
     </div>
   </div>
 </div>
 }
 
 @if (loading() && !showForm()) {
-<p>Loading...</p>
+<p class="loading">Loading...</p>
 }
 
 @if (hasProducts()) {
@@ -180,13 +262,13 @@
       </td>
       <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
       <td>
-        <button (click)="openEditForm(product)">Edit</button>
-        <button (click)="deleteProduct(product.id)">Delete</button>
+        <button class="btn-small" (click)="openEditForm(product)">Edit</button>
+        <button class="btn-danger" (click)="deleteProduct(product.id)">Delete</button>
       </td>
     </tr>
     }
   </tbody>
 </table>
 } @else if (!loading()) {
-<p>No products found.</p>
+<p class="empty">No products found.</p>
 }
