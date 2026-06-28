@@ -1,67 +1,94 @@
-## Product Categories
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1>Product Categories</h1>
+      <p class="subtitle">Manage your product catalog hierarchy</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateForm()">+ New Category</button>
+  </div>
 
-@if (error()) {
-<div class="error">{{ error() }}</div>
-}
+  @if (error()) {
+  <div class="alert error">{{ error() }}</div>
+  }
 
-<div class="actions">
-  <button (click)="openCreateForm()">+ New Category</button>
-  <button (click)="loadCategories()">Refresh</button>
-</div>
+  @if (showForm()) {
+  <div class="form-overlay" (click)="closeForm()">
+    <div class="form-panel" (click)="$event.stopPropagation()">
+      <h3>{{ isEditing() ? 'Edit Category' : 'New Category' }}</h3>
 
-@if (showForm()) {
-<div class="form-overlay">
-  <div class="form-panel">
-    <h3>{{ isEditing() ? 'Edit Category' : 'New Category' }}</h3>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Name *</label>
+          <input type="text" [ngModel]="formName()" (ngModelChange)="formName.set($event)"
+            placeholder="E.g. Beverages" />
+        </div>
 
-    <label>Name *</label>
-    <input type="text" [ngModel]="formName()" (ngModelChange)="formName.set($event)" />
+        <div class="form-group full-width">
+          <label>Parent Category</label>
+          <select [ngModel]="formParentId()" (ngModelChange)="formParentId.set($event ? +$event : null)">
+            <option [ngValue]="null">-- Root (no parent) --</option>
+            @for (cat of getFlatCategories(editingCategory()?.id); track cat.id) {
+            <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
 
-    <label>Parent Category</label>
-    <select [ngModel]="formParentId()" (ngModelChange)="formParentId.set($event ? +$event : null)">
-      <option [ngValue]="null">-- Root (no parent) --</option>
-      @for (cat of getFlatCategories(editingCategory()?.id); track cat.id) {
-      <option [ngValue]="cat.id">{{ cat.name }}</option>
-      }
-    </select>
+        <div class="form-group">
+          <label>Color</label>
+          <div class="color-input-wrapper">
+            <input type="color" [ngModel]="formColor()" (ngModelChange)="formColor.set($event)" />
+            <span class="color-value">{{ formColor() }}</span>
+          </div>
+        </div>
 
-    <label>Color</label>
-    <input type="color" [ngModel]="formColor()" (ngModelChange)="formColor.set($event)" />
+        <div class="form-group">
+          <label>Sort Order</label>
+          <input type="number" [ngModel]="formSortOrder()" (ngModelChange)="formSortOrder.set(+$event)" min="0" />
+        </div>
+      </div>
 
-    <label>Sort Order</label>
-    <input type="number" [ngModel]="formSortOrder()" (ngModelChange)="formSortOrder.set(+$event)" />
-
-    <div class="form-actions">
-      <button (click)="saveCategory()" [disabled]="loading()">Save</button>
-      <button (click)="closeForm()">Cancel</button>
+      <div class="actions">
+        <button class="btn-primary" (click)="saveCategory()" [disabled]="loading()">
+          @if (loading()) { ⏳ Saving... } @else { 💾 Save }
+        </button>
+        <button class="btn-secondary" (click)="closeForm()">Cancel</button>
+      </div>
     </div>
   </div>
+  }
+
+  @if (loading() && !showForm()) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading categories...</p>
+  </div>
+  }
+
+  @if (hasCategories()) {
+  <div class="card table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Color</th>
+          <th>Sort</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (cat of categories(); track cat.id) {
+        <ng-container *ngTemplateOutlet="categoryRow; context: { $implicit: cat, depth: 0 }"></ng-container>
+        }
+      </tbody>
+    </table>
+  </div>
+  } @else if (!loading()) {
+  <div class="empty-state">
+    <p>No categories found. Create your first category to organize products.</p>
+    <button class="btn-primary" (click)="openCreateForm()">+ New Category</button>
+  </div>
+  }
 </div>
-}
-
-@if (loading() && !showForm()) {
-<p>Loading...</p>
-}
-
-@if (hasCategories()) {
-<table class="data-table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Color</th>
-      <th>Sort</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (cat of categories(); track cat.id) {
-    <ng-container *ngTemplateOutlet="categoryRow; context: { $implicit: cat, depth: 0 }"></ng-container>
-    }
-  </tbody>
-</table>
-} @else if (!loading()) {
-<p>No categories found.</p>
-}
 
 <ng-template #categoryRow let-cat let-depth="depth">
   <tr>
@@ -72,14 +99,18 @@
       } @else {
       <span class="tree-icon">📄</span>
       }
-      <span class="color-dot" [style.background-color]="cat.color || '#ccc'"></span>
-      {{ cat.name }}
+      <span class="color-dot" [style.background-color]="cat.color || '#cbd5e1'"></span>
+      <span class="cat-name">{{ cat.name }}</span>
     </td>
-    <td>{{ cat.color || '-' }}</td>
-    <td>{{ cat.sortOrder }}</td>
     <td>
-      <button (click)="openEditForm(cat)">Edit</button>
-      <button (click)="deleteCategory(cat.id)">Delete</button>
+      <code class="color-code">{{ cat.color || '-' }}</code>
+    </td>
+    <td>{{ cat.sortOrder }}</td>
+    <td class="actions-col">
+      <div class="btn-group">
+        <button class="btn-icon" (click)="openEditForm(cat)" title="Edit">✏️</button>
+        <button class="btn-icon danger" (click)="deleteCategory(cat.id)" title="Delete">🗑️</button>
+      </div>
     </td>
   </tr>
   @if (cat.children && cat.children.length > 0) {

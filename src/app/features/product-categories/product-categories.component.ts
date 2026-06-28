@@ -4,7 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductCategoriesService } from '../../core/services/product-categories.service';
 import { ProductCategory } from '../../core/models/product.model';
-
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-product-categories',
   standalone: true,
@@ -27,7 +28,11 @@ export class ProductCategoriesComponent implements OnInit {
   hasCategories = computed(() => this.categories().length > 0);
   isEditing = computed(() => this.editingCategory() !== null);
 
-  constructor(private categoriesService: ProductCategoriesService) {}
+  constructor(
+    private categoriesService: ProductCategoriesService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService,
+  ) {}
 
   ngOnInit(): void {
     this.loadCategories();
@@ -104,16 +109,24 @@ export class ProductCategoriesComponent implements OnInit {
   }
 
   deleteCategory(id: number): void {
-    if (!confirm('Delete this category and all its children?')) return;
-    this.loading.set(true);
-    this.categoriesService.delete(id).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.loadCategories();
-      },
-      error: (err: any) => {
-        this.loading.set(false);
-        this.error.set('Error deleting: ' + err.message);
+    this.confirmDialog.open({
+      title: 'Delete Category',
+      message: 'This will delete the category and all its children. Are you sure?',
+      confirmText: 'Delete',
+      onConfirm: () => {
+        this.loading.set(true);
+        this.categoriesService.delete(id).subscribe({
+          next: () => {
+            this.loading.set(false);
+            this.toast.success('Category deleted');
+            this.loadCategories();
+          },
+          error: (err: any) => {
+            this.loading.set(false);
+            this.error.set('Error deleting: ' + err.message);
+            this.toast.error('Failed to delete category');
+          },
+        });
       },
     });
   }

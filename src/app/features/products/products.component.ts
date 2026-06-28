@@ -1,10 +1,11 @@
-// src/app/features/products/products.component.ts
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductsService } from '../../core/services/products.service';
 import { ProductCategoriesService } from '../../core/services/product-categories.service';
 import { MaterialsService } from '../../core/services/materials.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Material } from '../../core/models/material.model';
 import {
   Product,
@@ -29,11 +30,19 @@ export class ProductsComponent implements OnInit {
   modifierGroups = signal<ModifierGroup[]>([]);
   loading = signal<boolean>(false);
   error = signal<string>('');
+  // Selettore gerarchico categorie
+  // Rimuovi questi:
+  // selectedMainCategoryId = signal<number | undefined>(undefined);
+  // selectedSubCategoryId = signal<number | undefined>(undefined);
+
+  // Nuovo approccio: array di selezioni per livelli dinamici
+  selectedCategoryPath = signal<number[]>([]); // [1, 5, 2] = Bottle → Premium → Vodka
 
   editingProduct = signal<Product | null>(null);
   showForm = signal<boolean>(false);
 
-  formData: Partial<Product> = {
+  // 🔧 FIX: formData diventa signal invece di oggetto plain
+  formData = signal<Partial<Product>>({
     name: '',
     sku: '',
     basePrice: 0,
@@ -44,9 +53,8 @@ export class ProductsComponent implements OnInit {
     taxRate: 0,
     trackInventory: true,
     allowDecimalQty: false,
-  };
+  });
 
-  // Ricette sono DENTRO ogni variante — non più signal separato
   formVariants = signal<
     {
       id?: number;
@@ -61,6 +69,7 @@ export class ProductsComponent implements OnInit {
       }[];
     }[]
   >([]);
+
   formSelectedModifierIds = signal<number[]>([]);
 
   formAddons = signal<
@@ -85,13 +94,59 @@ export class ProductsComponent implements OnInit {
     private productsService: ProductsService,
     private categoriesService: ProductCategoriesService,
     private materialsService: MaterialsService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService,
   ) {}
+  // 🔧 NUOVO: helper per aggiornare formData signal
+  updateFormData(field: keyof Product, value: any): void {
+    this.formData.update((prev) => ({ ...prev, [field]: value }));
+  }
+  // Computed: ritorna i children dell'ultima selezione
+  categoryLevels = computed(() => {
+    const path = this.selectedCategoryPath();
+    const levels: ProductCategory[][] = [];
+
+    // Livello 0: root categories (senza parent)
+    levels.push(this.categories().filter((c) => !c.parentId));
+
+    // Livelli successivi: children di ogni selezione
+    for (let i = 0; i < path.length; i++) {
+      const parentId = path[i];
+      const parent = this.findCategoryById(parentId);
+      if (parent?.children && parent.children.length > 0) {
+        levels.push(parent.children);
+      }
+    }
+
+    return levels;
+  });
+
+  // Computed: la categoria finale selezionata (l'ultima del path)
+  finalCategoryId = computed(() => {
+    const path = this.selectedCategoryPath();
+    return path.length > 0 ? path[path.length - 1] : undefined;
+  });
 
   ngOnInit(): void {
     this.loadProducts();
     this.loadCategories();
     this.loadMaterials();
     this.loadModifierGroups();
+  }
+  // Seleziona una categoria a un livello specifico
+  selectCategoryLevel(levelIndex: number, categoryId: number | undefined): void {
+    this.selectedCategoryPath.update((path) => {
+      // Tronca il path al livello selezionato
+      const newPath = path.slice(0, levelIndex);
+      if (categoryId) {
+        newPath.push(categoryId);
+      }
+      return newPath;
+    });
+
+    // Aggiorna formData con l'ultima categoria selezionata
+    const finalId = this.finalCategoryId();
+    this.updateFormData('categoryId', finalId);
   }
 
   loadProducts(): void {
@@ -134,10 +189,30 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
   }
 
+  // Quando cambia la sub, aggiorna categoryId nel form
+  // // (da chiamare nel template)
+  // onMainCategoryChange(mainId: number | undefined): void {
+  //   this.selectedMainCategoryId.set(mainId);
+  //   this.selectedSubCategoryId.set(undefined);
+  //   // Se non ha sub, usa direttamente la main
+  //   const hasChildren = this.categories().find((c) => c.id === mainId)?.children?.length;
+  //   if (!hasChildren) {
+  //     this.updateFormData('categoryId', mainId);
+  //   } else {
+  //     this.updateFormData('categoryId', undefined);
+  //   }
+  // }
+
+  // onSubCategoryChange(subId: number | undefined): void {
+  //   this.selectedSubCategoryId.set(subId);
+  //   this.updateFormData('categoryId', subId || this.selectedMainCategoryId());
+  // }
+
   openCreateForm(): void {
     this.formAddons.set([]);
     this.editingProduct.set(null);
-    this.formData = {
+
+    this.formData.set({
       name: '',
       sku: '',
       basePrice: 0,
@@ -148,19 +223,19 @@ export class ProductsComponent implements OnInit {
       taxRate: 0,
       trackInventory: true,
       allowDecimalQty: false,
-    };
+    });
     this.formVariants.set([]);
-
     this.formSelectedModifierIds.set([]);
+    this.selectedCategoryPath.set([]);
     this.showForm.set(true);
   }
 
   openEditForm(product: Product): void {
+    console.log('🔍 categories loaded:', this.categories().length);
+    console.log('🔍 product categoryId:', product.categoryId);
     this.editingProduct.set(product);
-
-    // Togli cost dal formData (non esiste nel DB)
     const { cost, ...productWithoutCost } = product as any;
-    this.formData = { ...productWithoutCost };
+    this.formData.set({ ...productWithoutCost });
 
     // Popola varianti con ricette nestate
     this.formVariants.set(
@@ -200,7 +275,34 @@ export class ProductsComponent implements OnInit {
       })) || [],
     );
 
+    // Ripopola path gerarchico
+    const catId = product.categoryId;
+    if (catId) {
+      const path = this.buildCategoryPath(catId);
+      this.selectedCategoryPath.set(path);
+      console.log('🔍 Category path:', path);
+    } else {
+      this.selectedCategoryPath.set([]);
+    }
+
     this.showForm.set(true);
+  }
+
+  // Costruisce il path dalla foglia alla radice
+  buildCategoryPath(leafId: number): number[] {
+    const path: number[] = [];
+    let current = this.findCategoryById(leafId);
+
+    while (current) {
+      path.unshift(current.id); // aggiungi in testa
+      if (current.parentId) {
+        current = this.findCategoryById(current.parentId);
+      } else {
+        break;
+      }
+    }
+
+    return path;
   }
 
   closeForm(): void {
@@ -275,23 +377,24 @@ export class ProductsComponent implements OnInit {
   }
 
   saveProduct(): void {
-    if (!this.formData.name || !this.formData.sku) {
+    const data = this.formData();
+    if (!data.name || !data.sku) {
       this.error.set('Name and SKU are required');
       return;
     }
 
     this.loading.set(true);
     const basePayload: any = {
-      name: this.formData.name,
-      sku: this.formData.sku,
-      basePrice: Number(this.formData.basePrice) || 0,
-      categoryId: this.formData.categoryId ? Number(this.formData.categoryId) : undefined,
-      barcode: this.formData.barcode || undefined,
-      description: this.formData.description || undefined,
-      isActive: this.formData.isActive,
-      taxRate: this.formData.taxRate ? Number(this.formData.taxRate) : undefined,
-      trackInventory: this.formData.trackInventory,
-      allowDecimalQty: this.formData.allowDecimalQty,
+      name: data.name,
+      sku: data.sku,
+      basePrice: Number(data.basePrice) || 0,
+      categoryId: data.categoryId ? Number(data.categoryId) : undefined,
+      barcode: data.barcode || undefined,
+      description: data.description || undefined,
+      isActive: data.isActive,
+      taxRate: data.taxRate ? Number(data.taxRate) : undefined,
+      trackInventory: data.trackInventory,
+      allowDecimalQty: data.allowDecimalQty,
     };
 
     if (this.isEditing() && this.editingProduct()?.id) {
@@ -391,22 +494,30 @@ export class ProductsComponent implements OnInit {
   }
 
   deleteProduct(id: number): void {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    this.loading.set(true);
-    this.productsService.delete(id).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.loadProducts();
-      },
-      error: (err: any) => {
-        this.loading.set(false);
-        this.error.set('Error deleting: ' + err.message);
+    this.confirmDialog.open({
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product? This action cannot be undone.',
+      confirmText: 'Delete',
+      onConfirm: () => {
+        this.loading.set(true);
+        this.productsService.delete(id).subscribe({
+          next: () => {
+            this.loading.set(false);
+            this.toast.success('Product deleted');
+            this.loadProducts();
+          },
+          error: (err: any) => {
+            this.loading.set(false);
+            this.error.set('Error deleting: ' + err.message);
+            this.toast.error('Failed to delete product');
+          },
+        });
       },
     });
   }
 
   getCategoryName(categoryId?: number): string {
-    return this.categories().find((c) => c.id === categoryId)?.name || '-';
+    return this.findCategoryById(categoryId)?.name || '-';
   }
 
   getUnitLabel(unit: string): string {
@@ -484,5 +595,42 @@ export class ProductsComponent implements OnInit {
       u[addonIndex] = { ...u[addonIndex], items };
       return u;
     });
+  }
+  // Cerca una categoria in tutto l'albero (ricorsivo)
+  findCategoryById(
+    id: number | undefined,
+    cats: ProductCategory[] = this.categories(),
+  ): ProductCategory | undefined {
+    if (!id) return undefined;
+
+    for (const cat of cats) {
+      if (cat.id === id) {
+        return cat;
+      }
+      if (cat.children && cat.children.length > 0) {
+        const found = this.findCategoryById(id, cat.children);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+  // Ritorna il percorso gerarchico "Parent → Sub"
+  // Sostituisci getCategoryHierarchy con questa versione
+  getCategoryHierarchy(categoryId?: number): string {
+    if (!categoryId) return '-';
+
+    const path: string[] = [];
+    let current = this.findCategoryById(categoryId);
+
+    while (current) {
+      path.unshift(current.name); // aggiungi in testa
+      if (current.parentId) {
+        current = this.findCategoryById(current.parentId);
+      } else {
+        break;
+      }
+    }
+
+    return path.length > 0 ? path.join(' → ') : '-';
   }
 }
