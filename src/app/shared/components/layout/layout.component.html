@@ -1,16 +1,37 @@
 <div class="layout">
-  <aside class="sidebar" [class.closed]="!sidebarOpen">
+  <aside class="sidebar" [class.closed]="!sidebarOpen()">
     <div class="sidebar-header">
       <h2>POS Enterprise</h2>
-      <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
     </div>
 
     <nav class="sidebar-nav">
-      @for (item of menuItems; track item.route) {
-      <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
-        <span class="icon">{{ item.icon }}</span>
-        <span class="label">{{ item.label }}</span>
+      <!-- Dashboard sempre visibile -->
+      <a [routerLink]="'/dashboard'" routerLinkActive="active" class="nav-item nav-single">
+        <i class="fas fa-gauge-high nav-icon"></i>
+        <span class="nav-label">Dashboard</span>
       </a>
+
+      <!-- Gruppi menu -->
+      @for (group of groups(); track group.label) {
+      <div class="nav-group" [class.expanded]="isExpanded(group.label)">
+        <button class="nav-group-header" (click)="toggleGroup(group.label)" [class.active]="isGroupActive(group)">
+          <i class="fas {{ group.icon }} nav-icon"></i>
+          <span class="nav-label">{{ group.label }}</span>
+          <i class="fas fa-chevron-down group-chevron"></i>
+        </button>
+
+        <div class="nav-group-items">
+          @for (item of group.items; track item.route) {
+          <a [routerLink]="item.route" routerLinkActive="active" class="nav-item nav-sub">
+            <i class="fas {{ item.icon }} nav-icon"></i>
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+          }
+        </div>
+      </div>
       }
     </nav>
 
@@ -21,11 +42,14 @@
         <span class="user-role">{{ u.role }}</span>
       </div>
       }
-      <button class="logout-btn" (click)="logout()">🚪 Logout</button>
+      <button class="logout-btn" (click)="logout()">
+        <i class="fas fa-right-from-bracket"></i>
+        <span>Logout</span>
+      </button>
     </div>
   </aside>
 
-  <main class="main-content" [class.expanded]="!sidebarOpen">
+  <main class="main-content" [class.expanded]="!sidebarOpen()">
     <router-outlet></router-outlet>
   </main>
 </div>
