@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -15,10 +15,18 @@ import { Company, CreateCompanyRequest } from '../../core/models/company.model';
 export class CompanyPageComponent implements OnInit {
   companies = signal<Company[]>([]);
   isEditing = signal(false);
+  showInactive = signal(false);
   editingId = signal<number | null>(null);
   formData = signal<Partial<CreateCompanyRequest>>({});
 
   constructor(private service: CompanyService) {}
+
+  filteredCompanies = computed(() => {
+    // <-- NUOVO
+    const all = this.companies();
+    if (this.showInactive()) return all;
+    return all.filter((c) => c.isActive);
+  });
 
   ngOnInit() {
     this.load();

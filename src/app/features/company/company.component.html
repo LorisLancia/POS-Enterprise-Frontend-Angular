@@ -1,6 +1,21 @@
 <div class="container">
-  <h1>Company Management</h1>
-  <p class="subtitle">Company details for receipts, invoices and reports</p>
+  <div class="page-header">
+    <div>
+      <h1>Company Management</h1>
+      <p class="subtitle">Manage your business locations</p>
+    </div>
+  </div>
+
+  <!-- NUOVA FILTER BAR -->
+  <div class="filter-bar">
+    <button class="btn-primary" (click)="startCreate()">+ New Company</button>
+    <div class="filter-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" [ngModel]="showInactive()" (ngModelChange)="showInactive.set($event)" />
+        <span>Show inactive</span>
+      </label>
+    </div>
+  </div>
 
   @if (isEditing()) {
   <div class="card form-card">
@@ -71,11 +86,11 @@
     </form>
   </div>
   } @else {
-  <button class="btn-primary mb-2" (click)="startCreate()">➕ New Company</button>
+
   }
 
   <div class="card-list">
-    @for (company of companies(); track company.id) {
+    @for (company of filteredCompanies(); track company.id) {
     <div class="card company-card">
       <div class="card-header">
         <h3>{{ company.name }}</h3>

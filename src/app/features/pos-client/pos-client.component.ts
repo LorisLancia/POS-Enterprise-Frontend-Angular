@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -21,6 +21,7 @@ export class PosClientPageComponent implements OnInit {
   warehouses = signal<Warehouse[]>([]);
   posClients = signal<POSClient[]>([]);
   selectedCompanyId = signal<number>(0);
+  showInactive = signal(false);
   isEditing = signal(false);
   editingId = signal<number | null>(null);
   formData = signal<Partial<CreatePOSClientRequest>>({});
@@ -30,6 +31,13 @@ export class PosClientPageComponent implements OnInit {
     private companyService: CompanyService,
     private warehouseService: WarehouseService,
   ) {}
+
+  filteredPOSClients = computed(() => {
+    // <-- NUOVO
+    const all = this.posClients();
+    if (this.showInactive()) return all;
+    return all.filter((p) => p.isActive);
+  });
 
   ngOnInit() {
     this.companyService.getAll().subscribe((data) => this.companies.set(data));

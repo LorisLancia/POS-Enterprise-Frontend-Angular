@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -18,6 +18,7 @@ export class WarehousePageComponent implements OnInit {
   companies = signal<Company[]>([]);
   warehouses = signal<Warehouse[]>([]);
   selectedCompanyId = signal<number>(0);
+  showInactive = signal(false);
   isEditing = signal(false);
   editingId = signal<number | null>(null);
   formData = signal<Partial<CreateWarehouseRequest>>({});
@@ -31,15 +32,26 @@ export class WarehousePageComponent implements OnInit {
     this.companyService.getAll().subscribe((data) => this.companies.set(data));
   }
 
+  updateForm(field: keyof CreateWarehouseRequest, value: any) {
+    this.formData.update((prev) => ({ ...prev, [field]: value }));
+  }
+
   onCompanyChange() {
     const id = this.selectedCompanyId();
     if (id > 0) {
       this.warehouseService.getAll(id).subscribe((data) => this.warehouses.set(data));
+      console.log(this.warehouses);
     } else {
       this.warehouses.set([]);
     }
     this.cancel();
   }
+
+  filteredWarehouses = computed(() => {
+    const all = this.warehouses();
+    if (this.showInactive()) return all;
+    return all.filter((w) => w.isActive);
+  });
 
   startCreate() {
     this.editingId.set(null);

@@ -4,12 +4,19 @@
 
   <div class="filter-bar">
     <label>Company:</label>
-    <select [(ngModel)]="selectedCompanyId" (change)="onCompanyChange()">
+    <select [ngModel]="selectedCompanyId()" (ngModelChange)="selectedCompanyId.set($event); onCompanyChange()">
       <option [value]="0">Select company...</option>
       @for (c of companies(); track c.id) {
       <option [value]="c.id">{{ c.name }}</option>
       }
     </select>
+
+    <div class="filter-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" [ngModel]="showInactive()" (ngModelChange)="showInactive.set($event)" />
+        <span>Show inactive</span>
+      </label>
+    </div>
   </div>
 
   @if (selectedCompanyId() > 0) {
@@ -52,7 +59,7 @@
   }
 
   <div class="card-list">
-    @for (pos of posClients(); track pos.id) {
+    @for (pos of filteredPOSClients(); track pos.id) {
     <div class="card pos-card">
       <div class="card-header">
         <h3>{{ pos.name }}</h3>
@@ -72,7 +79,7 @@
       </div>
       <div class="card-actions">
         <button class="btn-icon" (click)="startEdit(pos)" title="Edit">✏️</button>
-        <button class="btn-icon" (click)="syncNow(pos.id)" title="Sync now">🔄</button>
+        <button class="btn-icon sync" (click)="syncNow(pos.id)" title="Sync now">🔄</button>
         <button class="btn-icon" (click)="remove(pos.id)" title="Delete">🗑️</button>
       </div>
     </div>

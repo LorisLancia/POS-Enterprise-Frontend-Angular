@@ -342,3 +342,54 @@ h1 {
 .mb-2 {
   margin-bottom: 1.5rem;
 }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  div {
+    h1 {
+      margin-bottom: 0.25rem;
+    }
+  }
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: 1px solid $gray-200;
+  border-radius: $radius;
+  box-shadow: $shadow-sm;
+
+  .filter-toggle {
+    margin-left: auto;
+
+    .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: $gray-600;
+      cursor: pointer;
+      user-select: none;
+
+      input[type='checkbox'] {
+        width: 1.125rem;
+        height: 1.125rem;
+        accent-color: $primary;
+        cursor: pointer;
+      }
+
+      span {
+        color: $gray-700;
+      }
+    }
+  }
+}

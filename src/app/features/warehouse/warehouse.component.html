@@ -4,12 +4,19 @@
 
   <div class="filter-bar">
     <label>Company:</label>
-    <select [(ngModel)]="selectedCompanyId" (change)="onCompanyChange()">
+    <select [ngModel]="selectedCompanyId()" (ngModelChange)="selectedCompanyId.set($event); onCompanyChange()">
       <option [value]="0">Select company...</option>
       @for (c of companies(); track c.id) {
       <option [value]="c.id">{{ c.name }}</option>
       }
     </select>
+    <div class="filter-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" [ngModel]="showInactive()" (ngModelChange)="showInactive.set($event)" />
+        <span>Show inactive</span>
+      </label>
+    </div>
+
   </div>
 
   @if (selectedCompanyId() > 0) {
@@ -20,15 +27,18 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Name *</label>
-          <input [(ngModel)]="formData().name" name="name" required placeholder="E.g. Main Bar" />
+          <input [(ngModel)]="formData().name" (ngModelChange)="updateForm('name', $event)" name="name" required
+            placeholder="E.g. Main Bar" />
         </div>
         <div class="form-group full-width">
           <label>Address / Location</label>
-          <input [(ngModel)]="formData().address" name="address" placeholder="E.g. Ground floor, right side" />
+          <input [(ngModel)]="formData().address" (ngModelChange)="updateForm('address', $event)" name="address"
+            placeholder="E.g. Ground floor, right side" />
         </div>
         <div class="form-group">
           <label>Phone</label>
-          <input [(ngModel)]="formData().phone" name="phone" placeholder="Internal / Phone" />
+          <input [(ngModel)]="formData().phone" (ngModelChange)="updateForm('phone', $event)" name="phone"
+            placeholder="Internal / Phone" />
         </div>
       </div>
       <div class="actions">
@@ -42,7 +52,7 @@
   }
 
   <div class="card-list">
-    @for (w of warehouses(); track w.id) {
+    @for (w of filteredWarehouses(); track w.id) {
     <div class="card warehouse-card">
       <div class="card-header">
         <h3>{{ w.name }}</h3>
