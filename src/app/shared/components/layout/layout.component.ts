@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastComponent } from '../../components/toast/toast.component';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 interface MenuItem {
   label: string;
@@ -21,7 +22,7 @@ interface MenuGroup {
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ToastComponent],
+  imports: [CommonModule, RouterModule, ToastComponent, ConfirmDialogComponent],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss'],
 })

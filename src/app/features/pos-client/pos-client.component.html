@@ -78,9 +78,14 @@
         <p><strong>Last Sync:</strong> {{ pos.lastSyncAt ? (pos.lastSyncAt | date:'short') : 'Never' }}</p>
       </div>
       <div class="card-actions">
+        @if (pos.isActive) {
         <button class="btn-icon" (click)="startEdit(pos)" title="Edit">✏️</button>
         <button class="btn-icon sync" (click)="syncNow(pos.id)" title="Sync now">🔄</button>
-        <button class="btn-icon" (click)="remove(pos.id)" title="Delete">🗑️</button>
+        <button class="btn-icon danger" (click)="remove(pos.id)" title="Deactivate">🗑️</button>
+        } @else {
+        <button class="btn-icon" (click)="startEdit(pos)" title="Edit">✏️</button>
+        <!-- <button class="btn-icon success" (click)="reactivate(pos)" title="Reactivate">🔄</button> -->
+        }
       </div>
     </div>
     } @empty {

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CompanyService } from '../../core/services/company.service';
 import { Company, CreateCompanyRequest } from '../../core/models/company.model';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service'; // se non c'è
 
 @Component({
   selector: 'app-company-page',
@@ -19,7 +21,11 @@ export class CompanyPageComponent implements OnInit {
   editingId = signal<number | null>(null);
   formData = signal<Partial<CreateCompanyRequest>>({});
 
-  constructor(private service: CompanyService) {}
+  constructor(
+    private service: CompanyService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService,
+  ) {}
 
   filteredCompanies = computed(() => {
     // <-- NUOVO
@@ -87,14 +93,33 @@ export class CompanyPageComponent implements OnInit {
       });
     }
   }
-
   remove(id: number) {
-    if (
-      confirm(
-        'Delete this company? All associated data (warehouses, POS, products) will remain in the database but the company will be deactivated.',
-      )
-    ) {
-      this.service.delete(id).subscribe(() => this.load());
-    }
+    this.confirmDialog.open({
+      title: 'Deactivate Company',
+      message: 'This company will be set to inactive. Historical data will remain. Are you sure?',
+      confirmText: 'Deactivate',
+      onConfirm: () => {
+        this.service.delete(id).subscribe(() => {
+          this.toast.success('Company deactivated');
+          this.load();
+        });
+      },
+    });
+  }
+
+  // NUOVO — Reactivate
+  reactivate(company: Company) {
+    this.confirmDialog.open({
+      title: 'Reactivate Company',
+      message: `Reactivate "${company.name}"? It will be visible again in all lists.`,
+      confirmText: 'Reactivate',
+      onConfirm: () => {
+        // ✅ SOLO isActive, non tutto l'oggetto
+        this.service.update(company.id, { isActive: true }).subscribe(() => {
+          this.toast.success('Company reactivated');
+          this.load();
+        });
+      },
+    });
   }
 }

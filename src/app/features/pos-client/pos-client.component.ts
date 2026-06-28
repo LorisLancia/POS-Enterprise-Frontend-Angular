@@ -8,6 +8,8 @@ import { WarehouseService } from '../../core/services/warehouse.service';
 import { POSClient, CreatePOSClientRequest } from '../../core/models/pos-client.model';
 import { Company } from '../../core/models/company.model';
 import { Warehouse } from '../../core/models/warehouse.model';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service'; // se non c'è
 
 @Component({
   selector: 'app-pos-client-page',
@@ -30,6 +32,8 @@ export class PosClientPageComponent implements OnInit {
     private posClientService: PosClientService,
     private companyService: CompanyService,
     private warehouseService: WarehouseService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService,
   ) {}
 
   filteredPOSClients = computed(() => {
@@ -116,8 +120,30 @@ export class PosClientPageComponent implements OnInit {
   }
 
   remove(id: number) {
-    if (confirm('Delete this register? Historical sales data will remain in the database.')) {
-      this.posClientService.delete(id).subscribe(() => this.onCompanyChange());
-    }
+    this.confirmDialog.open({
+      title: 'Deactivate POS Client',
+      message: 'This register will be set to inactive. Historical sales data will remain.',
+      confirmText: 'Deactivate',
+      onConfirm: () => {
+        this.posClientService.delete(id).subscribe(() => {
+          this.toast.success('POS Client deactivated');
+          this.onCompanyChange();
+        });
+      },
+    });
   }
+
+  // reactivate(pos: POSClient) {
+  //   this.confirmDialog.open({
+  //     title: 'Reactivate POS Client',
+  //     message: `Reactivate "${pos.name}"?`,
+  //     confirmText: 'Reactivate',
+  //     onConfirm: () => {
+  //       this.posClientService.reactivate(pos.id).subscribe(() => {
+  //         this.toast.success('POS Client reactivated');
+  //         this.onCompanyChange();
+  //       });
+  //     },
+  //   });
+  // }
 }

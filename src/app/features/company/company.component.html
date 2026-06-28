@@ -117,8 +117,13 @@
         <p><strong>POS Clients:</strong> {{ company.posClients?.length || 0 }}</p>
       </div>
       <div class="card-actions">
+        @if (company.isActive) {
         <button class="btn-icon" (click)="startEdit(company)" title="Edit">✏️</button>
-        <button class="btn-icon" (click)="remove(company.id)" title="Delete">🗑️</button>
+        <button class="btn-icon danger" (click)="remove(company.id)" title="Deactivate">🗑️</button>
+        } @else {
+        <button class="btn-icon" (click)="startEdit(company)" title="Edit">✏️</button>
+        <button class="btn-icon success" (click)="reactivate(company)" title="Reactivate">🔄</button>
+        }
       </div>
     </div>
     } @empty {

@@ -226,6 +226,11 @@ h1 {
     color: $info;
     border-color: #a5f3fc;
   }
+  &.success:hover {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #a7f3d0;
+  }
 }
 
 // ============================================

@@ -143,6 +143,11 @@ h1 {
     color: $danger;
     border-color: #fecaca;
   }
+  &.success:hover {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #a7f3d0;
+  }
 }
 
 // ============================================

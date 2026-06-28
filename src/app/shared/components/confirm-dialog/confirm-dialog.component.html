@@ -1,0 +1,20 @@
+@if (dialog.dialogData(); as data) {
+<div class="dialog-overlay" (click)="dialog.close()">
+  <div class="dialog-box" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>{{ data.title }}</h3>
+    </div>
+    <div class="dialog-body">
+      <p>{{ data.message }}</p>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn-secondary" (click)="dialog.close()">
+        {{ data.cancelText || 'Cancel' }}
+      </button>
+      <button class="btn-primary danger" (click)="dialog.confirm()">
+        {{ data.confirmText || 'Confirm' }}
+      </button>
+    </div>
+  </div>
+</div>
+}

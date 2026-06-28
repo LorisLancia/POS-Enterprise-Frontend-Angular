@@ -70,8 +70,13 @@
         <p><strong>POS Clients:</strong> {{ w.posClients?.length || 0 }}</p>
       </div>
       <div class="card-actions">
+        @if (w.isActive) {
         <button class="btn-icon" (click)="startEdit(w)" title="Edit">✏️</button>
-        <button class="btn-icon" (click)="remove(w.id)" title="Delete">🗑️</button>
+        <button class="btn-icon danger" (click)="remove(w.id)" title="Deactivate">🗑️</button>
+        } @else {
+        <button class="btn-icon" (click)="startEdit(w)" title="Edit">✏️</button>
+        <button class="btn-icon success" (click)="reactivate(w)" title="Reactivate">🔄</button>
+        }
       </div>
     </div>
     } @empty {

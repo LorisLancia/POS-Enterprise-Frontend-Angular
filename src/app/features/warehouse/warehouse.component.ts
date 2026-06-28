@@ -6,6 +6,8 @@ import { WarehouseService } from '../../core/services/warehouse.service';
 import { CompanyService } from '../../core/services/company.service';
 import { Warehouse, CreateWarehouseRequest } from '../../core/models/warehouse.model';
 import { Company } from '../../core/models/company.model';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { ToastService } from '../../core/services/toast.service'; // se non c'è
 
 @Component({
   selector: 'app-warehouse-page',
@@ -26,6 +28,8 @@ export class WarehousePageComponent implements OnInit {
   constructor(
     private warehouseService: WarehouseService,
     private companyService: CompanyService,
+    private confirmDialog: ConfirmDialogService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
@@ -40,7 +44,6 @@ export class WarehousePageComponent implements OnInit {
     const id = this.selectedCompanyId();
     if (id > 0) {
       this.warehouseService.getAll(id).subscribe((data) => this.warehouses.set(data));
-      console.log(this.warehouses);
     } else {
       this.warehouses.set([]);
     }
@@ -110,8 +113,30 @@ export class WarehousePageComponent implements OnInit {
   }
 
   remove(id: number) {
-    if (confirm('Delete this warehouse?')) {
-      this.warehouseService.delete(id).subscribe(() => this.onCompanyChange());
-    }
+    this.confirmDialog.open({
+      title: 'Deactivate Warehouse',
+      message: 'This warehouse will be set to inactive. Historical data will remain.',
+      confirmText: 'Deactivate',
+      onConfirm: () => {
+        this.warehouseService.delete(id).subscribe(() => {
+          this.toast.success('Warehouse deactivated');
+          this.onCompanyChange();
+        });
+      },
+    });
+  }
+
+  reactivate(w: Warehouse) {
+    this.confirmDialog.open({
+      title: 'Reactivate Warehouse',
+      message: `Reactivate "${w.name}"?`,
+      confirmText: 'Reactivate',
+      onConfirm: () => {
+        this.warehouseService.update(w.id, { isActive: true }).subscribe(() => {
+          this.toast.success('Warehouse reactivated');
+          this.onCompanyChange();
+        });
+      },
+    });
   }
 }
