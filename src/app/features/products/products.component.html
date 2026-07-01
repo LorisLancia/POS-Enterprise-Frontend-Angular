@@ -184,69 +184,17 @@
       </div>
 
       <!-- Addon Groups -->
+      <!-- Addon Groups -->
       <div class="section">
         <h4>Addon Groups</h4>
-        <button class="btn-small" (click)="addAddon()">+ Add Addon Group</button>
-
-        @for (addon of formAddons(); track $index) {
-        <div class="addon-group">
-          <div class="row">
-            <div class="field-wrapper">
-              <span class="field-label">Group Name</span>
-              <input type="text" placeholder="E.g. Extra Toppings" [ngModel]="addon.name"
-                (ngModelChange)="updateAddon($index, 'name', $event)" />
-            </div>
-            <div class="field-wrapper">
-              <span class="field-label">Max Qty</span>
-              <input type="number" placeholder="0 = unlimited" [ngModel]="addon.maxQuantity"
-                (ngModelChange)="updateAddon($index, 'maxQuantity', +$event)" />
-            </div>
-            <div class="field-wrapper">
-              <span class="field-label">Sort</span>
-              <input type="number" placeholder="0" [ngModel]="addon.sortOrder"
-                (ngModelChange)="updateAddon($index, 'sortOrder', +$event)" />
-            </div>
-            <button class="btn-icon-danger" (click)="removeAddon($index)" title="Remove">🗑️</button>
-          </div>
-
-          <div class="sub-section">
-            <h5>Items</h5>
-            <button class="btn-small" (click)="addAddonItem($index)">+ Add Item</button>
-
-            @for (item of addon.items; track $index) {
-            <div class="row">
-              <div class="field-wrapper">
-                <span class="field-label">Product</span>
-                <select [ngModel]="item.addonProductId"
-                  (ngModelChange)="updateAddonItem($index, $index, 'addonProductId', +$event)">
-                  <option [ngValue]="0">-- Select --</option>
-                  @for (p of products(); track p.id) {
-                  <option [ngValue]="p.id">{{ p.name }}</option>
-                  }
-                </select>
-              </div>
-              <div class="field-wrapper">
-                <span class="field-label">Qty Value</span>
-                <input type="number" placeholder="1" step="0.01" [ngModel]="item.quantityValue"
-                  (ngModelChange)="updateAddonItem($index, $index, 'quantityValue', +$event)" />
-              </div>
-              <div class="field-wrapper">
-                <span class="field-label">Price</span>
-                <input type="number" placeholder="empty = product price" step="0.01" [ngModel]="item.price"
-                  (ngModelChange)="updateAddonItem($index, $index, 'price', $event ? +$event : undefined)" />
-              </div>
-              <div class="field-wrapper">
-                <span class="field-label">Sort</span>
-                <input type="number" placeholder="0" [ngModel]="item.sortOrder"
-                  (ngModelChange)="updateAddonItem($index, $index, 'sortOrder', +$event)" />
-              </div>
-              <button class="btn-icon-danger" (click)="removeAddonItem($index, $index)" title="Remove">🗑️</button>
-            </div>
-            } @empty {
-            <p class="empty">No items added.</p>
-            }
-          </div>
-        </div>
+        @for (ag of addonGroups(); track ag.id) {
+        <label class="modifier-label">
+          <input type="checkbox" [checked]="formSelectedAddonGroupIds().includes(ag.id)"
+            (change)="toggleAddonGroup(ag.id)" />
+          {{ ag.name }} (max {{ ag.maxQuantity }})
+        </label>
+        } @empty {
+        <p class="empty">No addon groups available. <a routerLink="/addon-groups">Create one</a></p>
         }
       </div>
 

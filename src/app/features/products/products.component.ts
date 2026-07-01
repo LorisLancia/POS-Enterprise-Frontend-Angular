@@ -13,6 +13,8 @@ import {
   STANDARD_UNITS,
   ProductCategory,
 } from '../../core/models/product.model';
+import { AddonGroupsService } from '../../core/services/addon-groups.service';
+import { AddonGroup } from '../../core/models/addon-group.model';
 
 type RecipeUnit = 'ML' | 'L' | 'G' | 'KG' | 'PC' | 'PK';
 
@@ -30,12 +32,10 @@ export class ProductsComponent implements OnInit {
   modifierGroups = signal<ModifierGroup[]>([]);
   loading = signal<boolean>(false);
   error = signal<string>('');
-  // Selettore gerarchico categorie
-  // Rimuovi questi:
-  // selectedMainCategoryId = signal<number | undefined>(undefined);
-  // selectedSubCategoryId = signal<number | undefined>(undefined);
+  addonGroups = signal<AddonGroup[]>([]);
+  formSelectedAddonGroupIds = signal<number[]>([]);
 
-  // Nuovo approccio: array di selezioni per livelli dinamici
+  // RIMUOVI: formAddons = signal<...>([]);
   selectedCategoryPath = signal<number[]>([]); // [1, 5, 2] = Bottle → Premium → Vodka
 
   editingProduct = signal<Product | null>(null);
@@ -72,20 +72,6 @@ export class ProductsComponent implements OnInit {
 
   formSelectedModifierIds = signal<number[]>([]);
 
-  formAddons = signal<
-    {
-      name: string;
-      maxQuantity: number;
-      sortOrder: number;
-      items: {
-        addonProductId: number;
-        quantityValue: number;
-        price?: number;
-        sortOrder: number;
-      }[];
-    }[]
-  >([]);
-
   hasProducts = computed(() => this.products().length > 0);
   isEditing = computed(() => this.editingProduct() !== null);
   standardUnits = STANDARD_UNITS;
@@ -96,6 +82,7 @@ export class ProductsComponent implements OnInit {
     private materialsService: MaterialsService,
     private confirmDialog: ConfirmDialogService,
     private toast: ToastService,
+    private addonGroupsService: AddonGroupsService,
   ) {}
   // 🔧 NUOVO: helper per aggiornare formData signal
   updateFormData(field: keyof Product, value: any): void {
@@ -132,6 +119,7 @@ export class ProductsComponent implements OnInit {
     this.loadCategories();
     this.loadMaterials();
     this.loadModifierGroups();
+    this.loadAddonGroups();
   }
   // Seleziona una categoria a un livello specifico
   selectCategoryLevel(levelIndex: number, categoryId: number | undefined): void {
@@ -147,6 +135,21 @@ export class ProductsComponent implements OnInit {
     // Aggiorna formData con l'ultima categoria selezionata
     const finalId = this.finalCategoryId();
     this.updateFormData('categoryId', finalId);
+  }
+  loadAddonGroups(): void {
+    this.addonGroupsService.getAll().subscribe({
+      next: (data: AddonGroup[]) => this.addonGroups.set(data),
+      error: () => {},
+    });
+  }
+
+  toggleAddonGroup(id: number): void {
+    this.formSelectedAddonGroupIds.update((ids) => {
+      if (ids.includes(id)) {
+        return ids.filter((i) => i !== id);
+      }
+      return [...ids, id];
+    });
   }
 
   loadProducts(): void {
@@ -209,7 +212,7 @@ export class ProductsComponent implements OnInit {
   // }
 
   openCreateForm(): void {
-    this.formAddons.set([]);
+    this.formSelectedAddonGroupIds.set([]);
     this.editingProduct.set(null);
 
     this.formData.set({
@@ -260,20 +263,7 @@ export class ProductsComponent implements OnInit {
     this.formSelectedModifierIds.set(product.modifiers?.map((m) => m.groupId) || []);
 
     // Popola addon groups
-    this.formAddons.set(
-      product.addons?.map((a) => ({
-        name: a.name,
-        maxQuantity: a.maxQuantity,
-        sortOrder: a.sortOrder,
-        items:
-          a.items?.map((item) => ({
-            addonProductId: item.addonProductId,
-            quantityValue: item.quantityValue,
-            price: item.price,
-            sortOrder: item.sortOrder,
-          })) || [],
-      })) || [],
-    );
+    this.formSelectedAddonGroupIds.set(product.addonGroups?.map((a) => a.groupId) || []);
 
     // Ripopola path gerarchico
     const catId = product.categoryId;
@@ -415,21 +405,7 @@ export class ProductsComponent implements OnInit {
             })),
         })),
         modifierGroupIds: this.formSelectedModifierIds(),
-        addons: this.formAddons()
-          .filter((a) => a.name.trim())
-          .map((a) => ({
-            name: a.name,
-            maxQuantity: Number(a.maxQuantity) || 0,
-            sortOrder: Number(a.sortOrder) || 0,
-            items: a.items
-              .filter((item) => item.addonProductId > 0)
-              .map((item) => ({
-                addonProductId: Number(item.addonProductId),
-                quantityValue: Number(item.quantityValue) || 1,
-                price: item.price !== undefined ? Number(item.price) : undefined,
-                sortOrder: Number(item.sortOrder) || 0,
-              })),
-          })),
+        addonGroupIds: this.formSelectedAddonGroupIds(),
       };
 
       this.productsService.update(this.editingProduct()!.id!, payload).subscribe({
@@ -462,21 +438,7 @@ export class ProductsComponent implements OnInit {
               })),
           })),
         modifierGroupIds: this.formSelectedModifierIds(),
-        addons: this.formAddons()
-          .filter((a) => a.name.trim())
-          .map((a) => ({
-            name: a.name,
-            maxQuantity: Number(a.maxQuantity) || 0,
-            sortOrder: Number(a.sortOrder) || 0,
-            items: a.items
-              .filter((item) => item.addonProductId > 0)
-              .map((item) => ({
-                addonProductId: Number(item.addonProductId),
-                quantityValue: Number(item.quantityValue) || 1,
-                price: item.price !== undefined ? Number(item.price) : undefined,
-                sortOrder: Number(item.sortOrder) || 0,
-              })),
-          })),
+        addonGroupIds: this.formSelectedAddonGroupIds(),
       };
 
       this.productsService.create(payload).subscribe({
@@ -537,65 +499,7 @@ export class ProductsComponent implements OnInit {
     return result;
   }
 
-  addAddon(): void {
-    this.formAddons.update((a) => [...a, { name: '', maxQuantity: 0, sortOrder: 0, items: [] }]);
-  }
 
-  removeAddon(index: number): void {
-    this.formAddons.update((a) => a.filter((_, i) => i !== index));
-  }
-
-  updateAddon(
-    index: number,
-    field: 'name' | 'maxQuantity' | 'sortOrder',
-    value: string | number,
-  ): void {
-    this.formAddons.update((a) => {
-      const u = [...a];
-      u[index] = { ...u[index], [field]: value };
-      return u;
-    });
-  }
-
-  addAddonItem(addonIndex: number): void {
-    this.formAddons.update((a) => {
-      const u = [...a];
-      u[addonIndex] = {
-        ...u[addonIndex],
-        items: [
-          ...u[addonIndex].items,
-          { addonProductId: 0, quantityValue: 1, price: undefined, sortOrder: 0 },
-        ],
-      };
-      return u;
-    });
-  }
-
-  removeAddonItem(addonIndex: number, itemIndex: number): void {
-    this.formAddons.update((a) => {
-      const u = [...a];
-      u[addonIndex] = {
-        ...u[addonIndex],
-        items: u[addonIndex].items.filter((_, i) => i !== itemIndex),
-      };
-      return u;
-    });
-  }
-
-  updateAddonItem(
-    addonIndex: number,
-    itemIndex: number,
-    field: 'addonProductId' | 'quantityValue' | 'price' | 'sortOrder',
-    value: string | number | undefined,
-  ): void {
-    this.formAddons.update((a) => {
-      const u = [...a];
-      const items = [...u[addonIndex].items];
-      items[itemIndex] = { ...items[itemIndex], [field]: value };
-      u[addonIndex] = { ...u[addonIndex], items };
-      return u;
-    });
-  }
   // Cerca una categoria in tutto l'albero (ricorsivo)
   findCategoryById(
     id: number | undefined,

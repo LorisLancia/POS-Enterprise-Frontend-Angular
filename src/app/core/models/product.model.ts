@@ -1,4 +1,5 @@
 import { Material } from './material.model';
+import { ProductAddon } from './addon-group.model';
 
 export interface ProductVariant {
   id: number;
@@ -53,28 +54,6 @@ export interface ProductModifier {
   group: ModifierGroup;
 }
 
-export interface ProductAddonItem {
-  id: number;
-  addonId: number;
-  addonProductId: number;
-  quantityValue: number;
-  price?: number;
-  sortOrder: number;
-  isActive: boolean;
-  addonProduct?: Product;
-}
-
-export interface ProductAddon {
-  id: number;
-  productId: number;
-  name: string;
-  maxQuantity: number;
-  sortOrder: number;
-  isActive: boolean;
-  createdAt: string;
-  items: ProductAddonItem[];
-}
-
 export interface Product {
   id: number;
   name: string;
@@ -95,7 +74,7 @@ export interface Product {
   variants?: ProductVariant[];
   recipes?: ProductRecipe[];
   modifiers?: ProductModifier[];
-  addons?: ProductAddon[];
+  addonGroups?: ProductAddon[];
 }
 
 export interface ProductCategory {

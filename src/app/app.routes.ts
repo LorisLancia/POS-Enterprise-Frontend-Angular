@@ -48,6 +48,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'addon-groups',
+        loadComponent: () =>
+          import('./features/addon-groups/addon-groups.component').then(
+            (m) => m.AddonGroupsComponent,
+          ),
+      },
+      {
         path: 'products',
         loadComponent: () =>
           import('./features/products/products.component').then((m) => m.ProductsComponent),
