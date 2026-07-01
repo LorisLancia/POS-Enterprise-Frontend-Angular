@@ -1,0 +1,261 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Ordini di Acquisto</h1>
+    <button class="btn btn-primary" (click)="openCreate()" [disabled]="!selectedWarehouseId()">
+      <i class="fa fa-plus"></i> Nuovo Ordine
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="field-wrapper" style="min-width: 250px;">
+      <label>Magazzino</label>
+      <select [ngModel]="selectedWarehouseId()" (ngModelChange)="selectedWarehouseId.set($event); onWarehouseChange()">
+        <option [ngValue]="null">-- Seleziona Magazzino --</option>
+        @for (wh of warehouses(); track wh.id) {
+        <option [value]="wh.id">{{ wh.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="search-box">
+      <i class="fa fa-search"></i>
+      <input type="text" placeholder="Cerca ordine..." [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
+    </div>
+    <label class="toggle-inactive">
+      <input type="checkbox" [ngModel]="showInactive()" (ngModelChange)="showInactive.set($event)" />
+      Mostra annullati
+    </label>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading">Caricamento...</div>
+  } @else if (!selectedWarehouseId()) {
+  <div class="empty-state">
+    <i class="fa fa-warehouse fa-3x"></i>
+    <p>Seleziona un magazzino per visualizzare gli ordini di acquisto</p>
+  </div>
+  } @else {
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fornitore</th>
+          <th>Totale</th>
+          <th>Stato</th>
+          <th>Data</th>
+          <th>Note</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (po of filteredPOs(); track po.id) {
+        <tr [class.cancelled]="po.status === 'cancelled'">
+          <td>{{ po.id }}</td>
+          <td>{{ po.supplier?.name || '-' }}</td>
+          <td>{{ po.total | number:'1.2-2' }} THB</td>
+          <td>
+            <span class="badge" [class]="statusBadgeClass(po.status)">
+              {{ statusLabel(po.status) }}
+            </span>
+          </td>
+          <td>{{ po.createdAt | date:'short' }}</td>
+          <td>{{ po.notes || '-' }}</td>
+          <td class="actions">
+            @if (po.status === 'draft') {
+            <button class="btn-icon" (click)="cancelPO(po)" title="Annulla">
+              <i class="fa fa-ban"></i>
+            </button>
+            }
+            @if (po.status !== 'received' && po.status !== 'cancelled') {
+            <button class="btn-icon btn-icon-success" (click)="openReceive(po)" title="Ricevi">
+              <i class="fa fa-check"></i>
+            </button>
+            }
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="7" class="empty">Nessun ordine trovato</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>
+
+<!-- FORM CREAZIONE PO -->
+@if (showForm()) {
+<div class="modal-overlay" (click)="closeForm()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Nuovo Ordine di Acquisto</h2>
+      <button class="btn-icon" (click)="closeForm()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field-wrapper">
+          <label>Magazzino *</label>
+          <select [ngModel]="formData().warehouseId"
+            (ngModelChange)="formData.set({...formData(), warehouseId: $event})">
+            <option [ngValue]="null">-- Seleziona --</option>
+            @for (wh of warehouses(); track wh.id) {
+            <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field-wrapper">
+          <label>Fornitore *</label>
+          <select [ngModel]="formData().supplierId" (ngModelChange)="formData.set({...formData(), supplierId: $event})">
+            <option [ngValue]="null">-- Seleziona --</option>
+            @for (sup of suppliers(); track sup.id) {
+            <option [value]="sup.id">{{ sup.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field-wrapper full-width">
+          <label>Note</label>
+          <input type="text" [ngModel]="formData().notes"
+            (ngModelChange)="formData.set({...formData(), notes: $event})" />
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <h3>Aggiungi Articolo</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="field-wrapper">
+              <label>Materiale *</label>
+              <select [ngModel]="newItem().materialId"
+                (ngModelChange)="newItem.set({...newItem(), materialId: $event, unitId: undefined})">
+                <option [ngValue]="undefined">-- Seleziona --</option>
+                @for (mat of materials(); track mat.id) {
+                <option [value]="mat.id">{{ mat.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="field-wrapper">
+              <label>Unità *</label>
+              <select [ngModel]="newItem().unitId" (ngModelChange)="newItem.set({...newItem(), unitId: $event})"
+                [disabled]="!newItem().materialId">
+                <option [ngValue]="undefined">-- Seleziona --</option>
+                @for (unit of selectedMaterialUnits(); track unit.id) {
+                <option [value]="unit.id">{{ unit.unit }} ({{ unit.quantity }})</option>
+                }
+              </select>
+            </div>
+            <div class="field-wrapper">
+              <label>Quantità *</label>
+              <input type="number" step="0.01" [ngModel]="newItem().quantity"
+                (ngModelChange)="newItem.set({...newItem(), quantity: $event})" />
+            </div>
+            <div class="field-wrapper">
+              <label>Prezzo Unit. (THB) *</label>
+              <input type="number" step="0.01" [ngModel]="newItem().unitPrice"
+                (ngModelChange)="newItem.set({...newItem(), unitPrice: $event})" />
+            </div>
+            <div class="field-wrapper btn-wrapper">
+              <button class="btn btn-primary btn-small" (click)="addItem()">
+                <i class="fa fa-plus"></i> Aggiungi
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (formData().items.length > 0) {
+      <table class="data-table" style="margin-top: 1rem;">
+        <thead>
+          <tr>
+            <th>Materiale</th>
+            <th>Unità</th>
+            <th>Quantità</th>
+            <th>Prezzo Unit.</th>
+            <th>Totale</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of formData().items; track $index) {
+          <tr>
+            <td>{{ getMaterialName(item.materialId) }}</td>
+            <td>{{ getUnitLabel(item.unitId) }}</td>
+            <td>{{ item.quantity | number:'1.2-2' }}</td>
+            <td>{{ item.unitPrice | number:'1.2-2' }}</td>
+            <td>{{ item.quantity * item.unitPrice | number:'1.2-2' }}</td>
+            <td>
+              <button class="btn-icon btn-icon-danger" (click)="removeFormItem($index)">
+                <i class="fa fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4"><strong>Totale Ordine</strong></td>
+            <td colspan="2"><strong>{{ formTotal() | number:'1.2-2' }} THB</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+      }
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+      <button class="btn btn-primary" (click)="save()" [disabled]="formData().items.length === 0">
+        Crea Ordine
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- FORM RICEZIONE PO -->
+@if (showReceiveForm()) {
+<div class="modal-overlay" (click)="closeForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Ricezione Ordine #{{ receivingPo()?.id }}</h2>
+      <button class="btn-icon" (click)="closeForm()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Fornitore: <strong>{{ receivingPo()?.supplier?.name }}</strong></p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Materiale</th>
+            <th>Ordinato</th>
+            <th>Già Ricevuto</th>
+            <th>Da Ricevere</th>
+            <th>Costo Unit.</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of receiveItems(); track item.poItemId) {
+          <tr>
+            <td>{{ getMaterialName(receivingPo()?.items?.find(i => i.id === item.poItemId)?.materialId || 0) }}</td>
+            <td>{{ receivingPo()?.items?.find(i => i.id === item.poItemId)?.quantity | number:'1.2-2' }}</td>
+            <td>{{ receivingPo()?.items?.find(i => i.id === item.poItemId)?.receivedQty | number:'1.2-2' }}</td>
+            <td>
+              <input type="number" step="0.01" [ngModel]="item.receivedQty"
+                (ngModelChange)="receiveItems.update(items => items.map(it => it.poItemId === item.poItemId ? {...it, receivedQty: +$event} : it))" />
+            </td>
+            <td>
+              <input type="number" step="0.01" [ngModel]="item.unitCost"
+                (ngModelChange)="receiveItems.update(items => items.map(it => it.poItemId === item.poItemId ? {...it, unitCost: +$event} : it))" />
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+      <button class="btn btn-primary" (click)="saveReceive()">Conferma Ricezione</button>
+    </div>
+  </div>
+</div>
+}

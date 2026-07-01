@@ -95,6 +95,13 @@ export const routes: Routes = [
             (m) => m.StartingBalanceComponent,
           ),
       },
+      {
+        path: 'inventory/purchase-orders',
+        loadComponent: () =>
+          import('./features/purchase-orders/purchase-orders.component').then(
+            (m) => m.PurchaseOrdersComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
