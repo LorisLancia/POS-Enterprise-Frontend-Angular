@@ -6,7 +6,7 @@ import { AddonGroupsService } from '../../core/services/addon-groups.service';
 import { ProductsService } from '../../core/services/products.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { ToastService } from '../../core/services/toast.service';
-import { AddonGroup, AddonGroupItem } from '../../core/models/addon-group.model';
+import { AddonGroup } from '../../core/models/addon-group.model';
 import { Product } from '../../core/models/product.model';
 
 @Component({
@@ -20,7 +20,9 @@ export class AddonGroupsComponent implements OnInit {
   addonGroups = signal<AddonGroup[]>([]);
   products = signal<Product[]>([]);
   loading = signal<boolean>(false);
-  error = signal<string>('');
+
+  showInactive = signal<boolean>(false);
+  searchTerm = signal<string>('');
 
   editingGroup = signal<AddonGroup | null>(null);
   showForm = signal<boolean>(false);
@@ -40,7 +42,19 @@ export class AddonGroupsComponent implements OnInit {
     }[]
   >([]);
 
-  hasGroups = computed(() => this.addonGroups().length > 0);
+  readonly filteredGroups = computed(() => {
+    let list = this.addonGroups();
+    if (!this.showInactive()) {
+      list = list.filter((g) => g.isActive);
+    }
+    const term = this.searchTerm().toLowerCase().trim();
+    if (term) {
+      list = list.filter((g) => g.name.toLowerCase().includes(term));
+    }
+    return list;
+  });
+
+  hasGroups = computed(() => this.filteredGroups().length > 0);
   isEditing = computed(() => this.editingGroup() !== null);
 
   constructor(
@@ -57,15 +71,14 @@ export class AddonGroupsComponent implements OnInit {
 
   loadAddonGroups(): void {
     this.loading.set(true);
-    this.error.set('');
     this.addonGroupsService.getAll().subscribe({
       next: (data: AddonGroup[]) => {
         this.addonGroups.set(data);
         this.loading.set(false);
       },
       error: (err: any) => {
-        this.error.set('Error loading addon groups: ' + (err.message || 'Unknown error'));
         this.loading.set(false);
+        this.toast.error('Error loading addon groups: ' + (err.message || 'Unknown error'));
       },
     });
   }
@@ -137,7 +150,7 @@ export class AddonGroupsComponent implements OnInit {
   saveGroup(): void {
     const data = this.formData();
     if (!data.name) {
-      this.error.set('Name is required');
+      this.toast.error('Name is required');
       return;
     }
 
@@ -166,8 +179,7 @@ export class AddonGroupsComponent implements OnInit {
         },
         error: (err: any) => {
           this.loading.set(false);
-          this.error.set('Error updating: ' + err.message);
-          this.toast.error('Failed to update addon group');
+          this.toast.error('Error updating: ' + err.message);
         },
       });
     } else {
@@ -180,8 +192,7 @@ export class AddonGroupsComponent implements OnInit {
         },
         error: (err: any) => {
           this.loading.set(false);
-          this.error.set('Error creating: ' + err.message);
-          this.toast.error('Failed to create addon group');
+          this.toast.error('Error creating: ' + err.message);
         },
       });
     }
@@ -202,8 +213,7 @@ export class AddonGroupsComponent implements OnInit {
           },
           error: (err: any) => {
             this.loading.set(false);
-            this.error.set('Error deleting: ' + err.message);
-            this.toast.error('Failed to delete addon group');
+            this.toast.error('Error deleting: ' + err.message);
           },
         });
       },

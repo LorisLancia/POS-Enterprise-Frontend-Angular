@@ -10,10 +10,6 @@
     </div>
   </div>
 
-  @if (error()) {
-  <div class="alert error">{{ error() }}</div>
-  }
-
   @if (showForm()) {
   <div class="form-overlay" (click)="closeForm()">
     <div class="form-panel" (click)="$event.stopPropagation()">
@@ -32,10 +28,8 @@
             placeholder="E.g. BEV-001" />
         </div>
 
-        <!-- Selettore categorie a cascata dinamico -->
         <div class="form-group full-width">
           <label>Category</label>
-
           @for (level of categoryLevels(); track $index; let levelIndex = $index) {
           <div class="category-level">
             <select [ngModel]="selectedCategoryPath()[levelIndex]"
@@ -47,7 +41,6 @@
             </select>
           </div>
           }
-
           @if (selectedCategoryPath().length > 0) {
           <div class="category-preview">
             @for (catId of selectedCategoryPath(); track catId; let i = $index) {
@@ -184,7 +177,6 @@
       </div>
 
       <!-- Addon Groups -->
-      <!-- Addon Groups -->
       <div class="section">
         <h4>Addon Groups</h4>
         @for (ag of addonGroups(); track ag.id) {
@@ -208,6 +200,18 @@
   </div>
   }
 
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <input type="text" placeholder="Search products..." [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
+    </div>
+    <label class="toggle-inactive">
+      <input type="checkbox" [checked]="showInactive()" (change)="showInactive.set(!showInactive())" />
+      <span>Show inactive</span>
+    </label>
+  </div>
+
   @if (loading() && !showForm()) {
   <div class="loading-state">
     <div class="spinner"></div>
@@ -230,13 +234,10 @@
         </tr>
       </thead>
       <tbody>
-        @for (product of products(); track product.id) {
+        @for (product of filteredProducts(); track product.id) {
         <tr>
           <td>
             <strong>{{ product.name }}</strong>
-            @if (!product.isActive) {
-            <span class="badge" style="background: #fee2e2; color: #991b1b;">Inactive</span>
-            }
           </td>
           <td>{{ product.sku }}</td>
           <td>

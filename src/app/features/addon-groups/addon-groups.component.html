@@ -10,10 +10,6 @@
     </div>
   </div>
 
-  @if (error()) {
-  <div class="alert error">{{ error() }}</div>
-  }
-
   @if (showForm()) {
   <div class="form-overlay" (click)="closeForm()">
     <div class="form-panel" (click)="$event.stopPropagation()">
@@ -86,6 +82,18 @@
   </div>
   }
 
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <input type="text" placeholder="Search addon groups..." [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
+    </div>
+    <label class="toggle-inactive">
+      <input type="checkbox" [checked]="showInactive()" (change)="showInactive.set(!showInactive())" />
+      <span>Show inactive</span>
+    </label>
+  </div>
+
   @if (loading() && !showForm()) {
   <div class="loading-state">
     <div class="spinner"></div>
@@ -106,13 +114,10 @@
         </tr>
       </thead>
       <tbody>
-        @for (group of addonGroups(); track group.id) {
+        @for (group of filteredGroups(); track group.id) {
         <tr>
           <td>
             <strong>{{ group.name }}</strong>
-            @if (!group.isActive) {
-            <span class="badge" style="background: #fee2e2; color: #991b1b;">Inactive</span>
-            }
           </td>
           <td>{{ group.maxQuantity || 'Unlimited' }}</td>
           <td>

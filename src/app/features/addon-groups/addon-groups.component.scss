@@ -1,5 +1,5 @@
 // ============================================
-// POS Enterprise — Products Design System (CLEAN)
+// POS Enterprise — Addon Groups Design System
 // ============================================
 
 $primary: #2563eb;
@@ -40,9 +40,6 @@ $radius: 8px;
 $radius-md: 12px;
 $transition: all 0.2s ease;
 
-// ============================================
-// Container & Header
-// ============================================
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -70,26 +67,63 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Alert
-// ============================================
-.alert {
-  padding: 0.875rem 1.25rem;
-  border-radius: $radius;
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.5rem;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  padding: 1rem 1.25rem;
+  background: white;
+  border-radius: $radius;
+  border: 1px solid $gray-200;
+  box-shadow: $shadow-sm;
 
-  &.error {
-    background: $danger-light;
-    color: #991b1b;
-    border: 1px solid #fecaca;
+  .search-box {
+    flex: 1;
+    max-width: 400px;
+
+    input {
+      width: 100%;
+      padding: 0.5rem 0.875rem;
+      border: 1px solid $gray-200;
+      border-radius: $radius;
+      font-size: 0.9375rem;
+      color: $gray-800;
+      background: $gray-50;
+      transition: $transition;
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+        box-shadow: 0 0 0 3px rgba($primary, 0.1);
+        background: white;
+      }
+
+      &::placeholder {
+        color: $gray-400;
+      }
+    }
+  }
+
+  .toggle-inactive {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $gray-600;
+    cursor: pointer;
+
+    input[type='checkbox'] {
+      width: 1.125rem;
+      height: 1.125rem;
+      accent-color: $primary;
+      cursor: pointer;
+    }
   }
 }
 
-// ============================================
-// Buttons
-// ============================================
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -213,9 +247,6 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Form Overlay (Modal)
-// ============================================
 .form-overlay {
   position: fixed;
   inset: 0;
@@ -235,7 +266,7 @@ $transition: all 0.2s ease;
   border-radius: $radius-md;
   box-shadow: $shadow-lg;
   width: 100%;
-  max-width: 900px;
+  max-width: 800px;
   margin: auto;
   padding: 1.5rem;
   animation: slideUp 0.2s ease;
@@ -250,9 +281,6 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Form Grid — 3 colonne
-// ============================================
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -304,39 +332,6 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Checkbox Row
-// ============================================
-.checkbox-row {
-  display: flex;
-  gap: 2rem;
-  margin: 1.25rem 0;
-  padding: 1rem 1.25rem;
-  background: $primary-light;
-  border-radius: $radius;
-  border: 1px solid rgba($primary, 0.15);
-
-  .checkbox-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.625rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: $primary-dark;
-    cursor: pointer;
-
-    input[type='checkbox'] {
-      width: 1.25rem;
-      height: 1.25rem;
-      accent-color: $primary;
-      cursor: pointer;
-    }
-  }
-}
-
-// ============================================
-// Sezioni — Card distinte
-// ============================================
 .section {
   margin-top: 1.5rem;
   padding: 1.25rem;
@@ -366,26 +361,6 @@ $transition: all 0.2s ease;
   }
 }
 
-.sub-section {
-  margin: 0.75rem 0 0.75rem 1.5rem;
-  padding: 1rem;
-  background: $gray-50;
-  border-radius: 8px;
-  border: 1px solid $gray-200;
-
-  h5 {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: $gray-600;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    margin: 0 0 0.75rem;
-  }
-}
-
-// ============================================
-// Field Wrapper — input con label sopra
-// ============================================
 .field-wrapper {
   display: flex;
   flex-direction: column;
@@ -424,30 +399,6 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Righe input
-// ============================================
-.variant-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding: 0.75rem;
-  background: white;
-  border-radius: 6px;
-  border: 1px solid $gray-100;
-
-  .field-wrapper:nth-child(1) {
-    flex: 2;
-  }
-  .field-wrapper:nth-child(2) {
-    flex: 1.5;
-  }
-  .field-wrapper:nth-child(3) {
-    flex: 0.8;
-  }
-}
-
 .row {
   display: flex;
   align-items: flex-end;
@@ -459,129 +410,16 @@ $transition: all 0.2s ease;
     flex: 2;
   }
   .field-wrapper:nth-child(2) {
-    flex: 0.7;
-  }
-  .field-wrapper:nth-child(3) {
-    flex: 1;
-  }
-  .field-wrapper:nth-child(4) {
     flex: 0.8;
   }
-}
-
-// ============================================
-// Addon Group
-// ============================================
-.addon-group {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid $gray-200;
-  box-shadow: $shadow-sm;
-
-  .row {
-    background: transparent;
-    border: none;
-    padding: 0.5rem 0;
-
-    .field-wrapper:nth-child(1) {
-      flex: 2;
-    }
-    .field-wrapper:nth-child(2) {
-      flex: 0.8;
-    }
-    .field-wrapper:nth-child(3) {
-      flex: 0.6;
-    }
+  .field-wrapper:nth-child(3) {
+    flex: 0.8;
   }
-
-  .sub-section .row {
-    .field-wrapper:nth-child(1) {
-      flex: 2;
-    }
-    .field-wrapper:nth-child(2) {
-      flex: 0.8;
-    }
-    .field-wrapper:nth-child(3) {
-      flex: 0.8;
-    }
-    .field-wrapper:nth-child(4) {
-      flex: 0.6;
-    }
+  .field-wrapper:nth-child(4) {
+    flex: 0.6;
   }
 }
 
-// ============================================
-// Modifier Labels
-// ============================================
-.modifier-label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0.75rem;
-  background: white;
-  border-radius: 6px;
-  border: 1px solid $gray-100;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  color: $gray-700;
-  cursor: pointer;
-  transition: $transition;
-
-  &:hover {
-    background: $gray-50;
-    border-color: $gray-200;
-  }
-
-  input[type='checkbox'] {
-    width: 1.125rem;
-    height: 1.125rem;
-    accent-color: $primary;
-  }
-
-  .modifier-info {
-    margin-left: auto;
-    font-size: 0.75rem;
-    color: $gray-400;
-    background: $gray-100;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-  }
-}
-
-// ============================================
-// Category Selector
-// ============================================
-.category-level {
-  margin-bottom: 0.5rem;
-  max-width: 300px;
-
-  select {
-    width: 100%;
-  }
-}
-
-.category-preview {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: $success-light;
-  color: $success;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-
-  .path-separator {
-    opacity: 0.6;
-  }
-}
-
-// ============================================
-// Empty
-// ============================================
 .empty {
   font-size: 0.875rem;
   color: $gray-400;
@@ -589,9 +427,6 @@ $transition: all 0.2s ease;
   margin: 0.5rem 0;
 }
 
-// ============================================
-// Form Actions
-// ============================================
 .form-actions {
   display: flex;
   gap: 0.75rem;
@@ -600,9 +435,6 @@ $transition: all 0.2s ease;
   border-top: 1px solid $gray-200;
 }
 
-// ============================================
-// Card & Table
-// ============================================
 .card {
   background: white;
   border-radius: $radius-md;
@@ -678,9 +510,6 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Badges
-// ============================================
 .badge {
   display: inline-flex;
   align-items: center;
@@ -694,9 +523,6 @@ $transition: all 0.2s ease;
   margin-bottom: 0.25rem;
 }
 
-// ============================================
-// Empty State
-// ============================================
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -711,9 +537,6 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Loading
-// ============================================
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -738,25 +561,6 @@ $transition: all 0.2s ease;
   }
 }
 
-// ============================================
-// Category Path (tabella)
-// ============================================
-.category-path {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.875rem;
-  color: $gray-700;
-
-  &::before {
-    content: '📁';
-    font-size: 0.875rem;
-  }
-}
-
-// ============================================
-// Animations
-// ============================================
 @keyframes spin {
   to {
     transform: rotate(360deg);

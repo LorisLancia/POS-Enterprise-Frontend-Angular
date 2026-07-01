@@ -35,13 +35,14 @@ export class ProductsComponent implements OnInit {
   addonGroups = signal<AddonGroup[]>([]);
   formSelectedAddonGroupIds = signal<number[]>([]);
 
-  // RIMUOVI: formAddons = signal<...>([]);
-  selectedCategoryPath = signal<number[]>([]); // [1, 5, 2] = Bottle → Premium → Vodka
+  showInactive = signal<boolean>(false);
+  searchTerm = signal<string>('');
+
+  selectedCategoryPath = signal<number[]>([]);
 
   editingProduct = signal<Product | null>(null);
   showForm = signal<boolean>(false);
 
-  // 🔧 FIX: formData diventa signal invece di oggetto plain
   formData = signal<Partial<Product>>({
     name: '',
     sku: '',
@@ -72,7 +73,24 @@ export class ProductsComponent implements OnInit {
 
   formSelectedModifierIds = signal<number[]>([]);
 
-  hasProducts = computed(() => this.products().length > 0);
+  readonly filteredProducts = computed(() => {
+    let list = this.products();
+    if (!this.showInactive()) {
+      list = list.filter((p) => p.isActive);
+    }
+    const term = this.searchTerm().toLowerCase().trim();
+    if (term) {
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          (p.sku && p.sku.toLowerCase().includes(term)) ||
+          (p.category?.name && p.category.name.toLowerCase().includes(term)),
+      );
+    }
+    return list;
+  });
+
+  hasProducts = computed(() => this.filteredProducts().length > 0);
   isEditing = computed(() => this.editingProduct() !== null);
   standardUnits = STANDARD_UNITS;
 
@@ -84,19 +102,15 @@ export class ProductsComponent implements OnInit {
     private toast: ToastService,
     private addonGroupsService: AddonGroupsService,
   ) {}
-  // 🔧 NUOVO: helper per aggiornare formData signal
+
   updateFormData(field: keyof Product, value: any): void {
     this.formData.update((prev) => ({ ...prev, [field]: value }));
   }
-  // Computed: ritorna i children dell'ultima selezione
+
   categoryLevels = computed(() => {
     const path = this.selectedCategoryPath();
     const levels: ProductCategory[][] = [];
-
-    // Livello 0: root categories (senza parent)
     levels.push(this.categories().filter((c) => !c.parentId));
-
-    // Livelli successivi: children di ogni selezione
     for (let i = 0; i < path.length; i++) {
       const parentId = path[i];
       const parent = this.findCategoryById(parentId);
@@ -104,11 +118,9 @@ export class ProductsComponent implements OnInit {
         levels.push(parent.children);
       }
     }
-
     return levels;
   });
 
-  // Computed: la categoria finale selezionata (l'ultima del path)
   finalCategoryId = computed(() => {
     const path = this.selectedCategoryPath();
     return path.length > 0 ? path[path.length - 1] : undefined;
@@ -121,21 +133,19 @@ export class ProductsComponent implements OnInit {
     this.loadModifierGroups();
     this.loadAddonGroups();
   }
-  // Seleziona una categoria a un livello specifico
+
   selectCategoryLevel(levelIndex: number, categoryId: number | undefined): void {
     this.selectedCategoryPath.update((path) => {
-      // Tronca il path al livello selezionato
       const newPath = path.slice(0, levelIndex);
       if (categoryId) {
         newPath.push(categoryId);
       }
       return newPath;
     });
-
-    // Aggiorna formData con l'ultima categoria selezionata
     const finalId = this.finalCategoryId();
     this.updateFormData('categoryId', finalId);
   }
+
   loadAddonGroups(): void {
     this.addonGroupsService.getAll().subscribe({
       next: (data: AddonGroup[]) => this.addonGroups.set(data),
@@ -161,8 +171,8 @@ export class ProductsComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err: any) => {
-        this.error.set('Error loading products: ' + (err.message || 'Unknown error'));
         this.loading.set(false);
+        this.toast.error('Error loading products: ' + (err.message || 'Unknown error'));
       },
     });
   }
@@ -192,29 +202,9 @@ export class ProductsComponent implements OnInit {
     this.loadProducts();
   }
 
-  // Quando cambia la sub, aggiorna categoryId nel form
-  // // (da chiamare nel template)
-  // onMainCategoryChange(mainId: number | undefined): void {
-  //   this.selectedMainCategoryId.set(mainId);
-  //   this.selectedSubCategoryId.set(undefined);
-  //   // Se non ha sub, usa direttamente la main
-  //   const hasChildren = this.categories().find((c) => c.id === mainId)?.children?.length;
-  //   if (!hasChildren) {
-  //     this.updateFormData('categoryId', mainId);
-  //   } else {
-  //     this.updateFormData('categoryId', undefined);
-  //   }
-  // }
-
-  // onSubCategoryChange(subId: number | undefined): void {
-  //   this.selectedSubCategoryId.set(subId);
-  //   this.updateFormData('categoryId', subId || this.selectedMainCategoryId());
-  // }
-
   openCreateForm(): void {
     this.formSelectedAddonGroupIds.set([]);
     this.editingProduct.set(null);
-
     this.formData.set({
       name: '',
       sku: '',
@@ -234,13 +224,10 @@ export class ProductsComponent implements OnInit {
   }
 
   openEditForm(product: Product): void {
-    console.log('🔍 categories loaded:', this.categories().length);
-    console.log('🔍 product categoryId:', product.categoryId);
     this.editingProduct.set(product);
     const { cost, ...productWithoutCost } = product as any;
     this.formData.set({ ...productWithoutCost });
 
-    // Popola varianti con ricette nestate
     this.formVariants.set(
       product.variants?.map((v) => ({
         id: v.id,
@@ -259,18 +246,13 @@ export class ProductsComponent implements OnInit {
       })) || [],
     );
 
-    // Popola modifier groups selezionati
     this.formSelectedModifierIds.set(product.modifiers?.map((m) => m.groupId) || []);
-
-    // Popola addon groups
     this.formSelectedAddonGroupIds.set(product.addonGroups?.map((a) => a.groupId) || []);
 
-    // Ripopola path gerarchico
     const catId = product.categoryId;
     if (catId) {
       const path = this.buildCategoryPath(catId);
       this.selectedCategoryPath.set(path);
-      console.log('🔍 Category path:', path);
     } else {
       this.selectedCategoryPath.set([]);
     }
@@ -278,20 +260,17 @@ export class ProductsComponent implements OnInit {
     this.showForm.set(true);
   }
 
-  // Costruisce il path dalla foglia alla radice
   buildCategoryPath(leafId: number): number[] {
     const path: number[] = [];
     let current = this.findCategoryById(leafId);
-
     while (current) {
-      path.unshift(current.id); // aggiungi in testa
+      path.unshift(current.id);
       if (current.parentId) {
         current = this.findCategoryById(current.parentId);
       } else {
         break;
       }
     }
-
     return path;
   }
 
@@ -369,7 +348,7 @@ export class ProductsComponent implements OnInit {
   saveProduct(): void {
     const data = this.formData();
     if (!data.name || !data.sku) {
-      this.error.set('Name and SKU are required');
+      this.toast.error('Name and SKU are required');
       return;
     }
 
@@ -411,12 +390,13 @@ export class ProductsComponent implements OnInit {
       this.productsService.update(this.editingProduct()!.id!, payload).subscribe({
         next: () => {
           this.loading.set(false);
+          this.toast.success('Product updated');
           this.loadProducts();
           this.closeForm();
         },
         error: (err: any) => {
           this.loading.set(false);
-          this.error.set('Error updating: ' + err.message);
+          this.toast.error('Error updating: ' + err.message);
         },
       });
     } else {
@@ -444,12 +424,13 @@ export class ProductsComponent implements OnInit {
       this.productsService.create(payload).subscribe({
         next: () => {
           this.loading.set(false);
+          this.toast.success('Product created');
           this.loadProducts();
           this.closeForm();
         },
         error: (err: any) => {
           this.loading.set(false);
-          this.error.set('Error creating: ' + err.message);
+          this.toast.error('Error creating: ' + err.message);
         },
       });
     }
@@ -470,8 +451,7 @@ export class ProductsComponent implements OnInit {
           },
           error: (err: any) => {
             this.loading.set(false);
-            this.error.set('Error deleting: ' + err.message);
-            this.toast.error('Failed to delete product');
+            this.toast.error('Error deleting: ' + err.message);
           },
         });
       },
@@ -486,7 +466,6 @@ export class ProductsComponent implements OnInit {
     return this.standardUnits.find((u) => u.value === unit)?.label || unit;
   }
 
-  // Ritorna categorie flat per dropdown (indentate per gerarchia)
   getFlatCategories(): ProductCategory[] {
     const result: ProductCategory[] = [];
     const walk = (cats: ProductCategory[], depth: number) => {
@@ -499,14 +478,11 @@ export class ProductsComponent implements OnInit {
     return result;
   }
 
-
-  // Cerca una categoria in tutto l'albero (ricorsivo)
   findCategoryById(
     id: number | undefined,
     cats: ProductCategory[] = this.categories(),
   ): ProductCategory | undefined {
     if (!id) return undefined;
-
     for (const cat of cats) {
       if (cat.id === id) {
         return cat;
@@ -518,23 +494,19 @@ export class ProductsComponent implements OnInit {
     }
     return undefined;
   }
-  // Ritorna il percorso gerarchico "Parent → Sub"
-  // Sostituisci getCategoryHierarchy con questa versione
+
   getCategoryHierarchy(categoryId?: number): string {
     if (!categoryId) return '-';
-
     const path: string[] = [];
     let current = this.findCategoryById(categoryId);
-
     while (current) {
-      path.unshift(current.name); // aggiungi in testa
+      path.unshift(current.name);
       if (current.parentId) {
         current = this.findCategoryById(current.parentId);
       } else {
         break;
       }
     }
-
     return path.length > 0 ? path.join(' → ') : '-';
   }
 }

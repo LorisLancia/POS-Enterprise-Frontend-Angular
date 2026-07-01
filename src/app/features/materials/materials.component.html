@@ -1,137 +1,201 @@
-## Materials
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1>Materials</h1>
+      <p class="subtitle">Manage raw materials, ingredients and supplies with units of measure</p>
+    </div>
+    <div class="btn-group">
+      <button class="btn-primary" (click)="openCreateForm()">+ New Material</button>
+      <button class="btn-secondary" (click)="refresh()">🔄 Refresh</button>
+    </div>
+  </div>
 
-@if (error()) {
-<div class="error">{{ error() }}</div>
-}
+  @if (showForm()) {
+  <div class="form-overlay" (click)="closeForm()">
+    <div class="form-panel" (click)="$event.stopPropagation()">
+      <h3>{{ isEditing() ? 'Edit Material' : 'New Material' }}</h3>
 
-<div class="actions">
-  <button (click)="openCreateForm()">+ New Material</button>
-  <button (click)="refresh()">Refresh</button>
-</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" [ngModel]="formData().name" (ngModelChange)="updateFormData('name', $event)"
+            placeholder="E.g. Coca Cola Syrup" />
+        </div>
 
-@if (showForm()) {
-<div class="form-overlay">
-  <div class="form-panel">
-    <h3>{{ isEditing() ? 'Edit Material' : 'New Material' }}</h3>
+        <div class="form-group">
+          <label>Min Stock Level</label>
+          <input type="number" [ngModel]="formData().minStock" (ngModelChange)="updateFormData('minStock', +$event)"
+            min="0" step="0.01" />
+        </div>
 
-    <label>Name *</label>
-    <input type="text" [ngModel]="formName()" (ngModelChange)="formName.set($event)" />
+        <div class="form-group">
+          <label>Category</label>
+          <select [ngModel]="formData().category" (ngModelChange)="updateFormData('category', $event)">
+            <option value="">-- Select --</option>
+            @for (cat of existingCategories(); track cat) {
+            <option [ngValue]="cat">{{ cat }}</option>
+            }
+            <option value="__new__">+ New Category</option>
+          </select>
+        </div>
 
-    <label>Description</label>
-    <input type="text" [ngModel]="formDescription()" (ngModelChange)="formDescription.set($event)" />
+        @if (showNewCategoryInput()) {
+        <div class="form-group">
+          <label>New Category</label>
+          <input type="text" [ngModel]="formData().newCategory" (ngModelChange)="updateFormData('newCategory', $event)"
+            placeholder="Enter new category name" />
+        </div>
+        }
 
-    <label>Category</label>
-    <select [ngModel]="formCategory()" (ngModelChange)="formCategory.set($event)">
-      <option value="">-- Select --</option>
-      @for (cat of existingCategories(); track cat) {
-      <option [ngValue]="cat">{{ cat }}</option>
-      }
-      <option value="__new__">+ New Category</option>
-    </select>
+        <div class="form-group full-width">
+          <label>Description</label>
+          <textarea [ngModel]="formData().description"
+            (ngModelChange)="updateFormData('description', $event || undefined)"
+            placeholder="Material description..."></textarea>
+        </div>
+      </div>
 
-    @if (showNewCategoryInput()) {
-    <label>New Category</label>
-    <input type="text" [ngModel]="formNewCategory()" (ngModelChange)="formNewCategory.set($event)" />
-    }
+      <div class="checkbox-row">
+        <label class="checkbox-label">
+          <input type="checkbox" [checked]="formData().isActive"
+            (change)="updateFormData('isActive', !formData().isActive)" />
+          Active
+        </label>
+      </div>
 
-    <label>Min Stock Level</label>
-    <input type="number" [ngModel]="formMinStock()" (ngModelChange)="formMinStock.set($event)" />
+      <!-- Units of Measure -->
+      <div class="section">
+        <h4>Units of Measure *</h4>
+        <p class="hint">Define how this material is measured. At least one unit required. Mark one as Default.</p>
 
-    <label>
-      <input type="checkbox" [checked]="formIsActive()" (change)="formIsActive.set(!formIsActive())" />
-      Active
+        @if (formData().units.length > 0) {
+        <div class="units-list">
+          @for (unit of formData().units; track $index) {
+          <div class="unit-row">
+            <div class="field-wrapper">
+              <span class="field-label">Unit</span>
+              <select [ngModel]="unit.unit" (ngModelChange)="updateUnit($index, 'unit', $event)">
+                @for (su of standardUnits; track su.value) {
+                <option [ngValue]="su.value">{{ su.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="field-wrapper">
+              <span class="field-label">Qty</span>
+              <input type="number" [ngModel]="unit.quantity" (ngModelChange)="updateUnit($index, 'quantity', +$event)"
+                min="0" step="0.01" />
+            </div>
+            <div class="field-wrapper checkbox-field">
+              <span class="field-label">Default</span>
+              <input type="checkbox" [checked]="unit.isDefault"
+                (change)="updateUnit($index, 'isDefault', !unit.isDefault)" />
+            </div>
+            <div class="field-wrapper checkbox-field">
+              <span class="field-label">Purchase</span>
+              <input type="checkbox" [checked]="unit.isPurchaseUnit"
+                (change)="updateUnit($index, 'isPurchaseUnit', !unit.isPurchaseUnit)" />
+            </div>
+            <div class="field-wrapper checkbox-field">
+              <span class="field-label">Sale</span>
+              <input type="checkbox" [checked]="unit.isSaleUnit"
+                (change)="updateUnit($index, 'isSaleUnit', !unit.isSaleUnit)" />
+            </div>
+            <button class="btn-icon-danger" (click)="removeUnit($index)" title="Remove">🗑️</button>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="empty">No units defined. Add at least one unit.</p>
+        }
+
+        <button class="btn-small" (click)="addUnit()">+ Add Unit</button>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" (click)="saveMaterial()" [disabled]="loading()">
+          @if (loading()) { Saving... } @else { Save }
+        </button>
+        <button class="btn-secondary" (click)="closeForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <input type="text" placeholder="Search materials..." [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
+    </div>
+    <label class="toggle-inactive">
+      <input type="checkbox" [checked]="showInactive()" (change)="showInactive.set(!showInactive())" />
+      <span>Show inactive</span>
     </label>
+  </div>
 
-    <h4>Units of Measure *</h4>
-    <p class="hint">Define how this material is measured. At least one unit required. Mark one as Default.</p>
+  @if (loading() && !showForm()) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading materials...</p>
+  </div>
+  }
 
-    @if (formUnits().length > 0) {
-    <table class="units-table">
+  @if (hasMaterials()) {
+  <div class="card table-card">
+    <table class="data-table">
       <thead>
         <tr>
-          <th>Unit</th>
-          <th>Quantity</th>
-          <th>Default</th>
-          <th>Purchase</th>
-          <th>Sale</th>
-          <th></th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Units</th>
+          <th>Min Stock</th>
+          <th>Status</th>
+          <th class="actions-col">Actions</th>
         </tr>
       </thead>
       <tbody>
-        @for (unit of formUnits(); track $index) {
+        @for (mat of filteredMaterials(); track mat.id) {
         <tr>
           <td>
-            <select [ngModel]="unit.unit" (ngModelChange)="updateUnit($index, 'unit', $event)">
-              @for (su of standardUnits; track su.value) {
-              <option [ngValue]="su.value">{{ su.label }}</option>
-              }
-            </select>
+            <strong>{{ mat.name }}</strong>
           </td>
-          <td><input type="number" [ngModel]="unit.quantity" (ngModelChange)="updateUnit($index, 'quantity', $event)" />
+          <td>
+            @if (mat.category) {
+            <span class="category-badge">{{ mat.category }}</span>
+            } @else {
+            <span style="color: #94a3b8;">-</span>
+            }
           </td>
-          <td><input type="checkbox" [checked]="unit.isDefault"
-              (change)="updateUnit($index, 'isDefault', !unit.isDefault)" /></td>
-          <td><input type="checkbox" [checked]="unit.isPurchaseUnit"
-              (change)="updateUnit($index, 'isPurchaseUnit', !unit.isPurchaseUnit)" /></td>
-          <td><input type="checkbox" [checked]="unit.isSaleUnit"
-              (change)="updateUnit($index, 'isSaleUnit', !unit.isSaleUnit)" /></td>
-          <td><button (click)="removeUnit($index)">Remove</button></td>
+          <td>
+            @for (badge of getUnitBadges(mat); track $index) {
+            <span class="badge">{{ badge }}</span>
+            } @empty {
+            <span style="color: #94a3b8;">No units</span>
+            }
+          </td>
+          <td>{{ mat.minStock | number:'1.2-2' }}</td>
+          <td>
+            @if (mat.isActive) {
+            <span class="badge" style="background: #d1fae5; color: #065f46;">Active</span>
+            } @else {
+            <span class="badge" style="background: #f1f5f9; color: #64748b;">Inactive</span>
+            }
+          </td>
+          <td class="actions-col">
+            <div class="btn-group">
+              <button class="btn-icon" (click)="openEditForm(mat)" title="Edit">✏️</button>
+              <button class="btn-icon danger" (click)="deleteMaterial(mat.id)" title="Delete">🗑️</button>
+            </div>
+          </td>
         </tr>
         }
       </tbody>
     </table>
-    } @else {
-    <p>No units defined. Add at least one unit.</p>
-    }
-
-    <button (click)="addUnit()">+ Add Unit</button>
-
-    <div class="form-actions">
-      <button (click)="saveMaterial()" [disabled]="loading()">Save</button>
-      <button (click)="closeForm()">Cancel</button>
-    </div>
   </div>
+  } @else if (!loading()) {
+  <div class="empty-state">
+    <p>No materials found. Create your first material to get started.</p>
+    <button class="btn-primary" (click)="openCreateForm()">+ New Material</button>
+  </div>
+  }
 </div>
-}
-
-@if (loading() && !showForm()) {
-<p>Loading...</p>
-}
-
-@if (hasMaterials()) {
-<table class="data-table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Category</th>
-      <th>Units</th>
-      <th>Min Stock</th>
-      <th>Active</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (mat of materials(); track mat.id) {
-    <tr>
-      <td>{{ mat.name }}</td>
-      <td>{{ mat.category || '-' }}</td>
-      <td>
-        @for (badge of getUnitBadges(mat); track $index) {
-        <span class="badge">{{ badge }}</span>
-        } @empty {
-        <span>No units</span>
-        }
-      </td>
-      <td>{{ mat.minStock | number:'1.2-2' }}</td>
-      <td>{{ mat.isActive ? 'Yes' : 'No' }}</td>
-      <td>
-        <button (click)="openEditForm(mat)">Edit</button>
-        <button (click)="deleteMaterial(mat.id)">Delete</button>
-      </td>
-    </tr>
-    }
-  </tbody>
-</table>
-} @else if (!loading()) {
-<p>No materials found.</p>
-}

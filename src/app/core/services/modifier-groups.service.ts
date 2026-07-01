@@ -26,4 +26,7 @@ export class ModifierGroupsService {
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
+  update(id: number, group: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}`, group);
+  }
 }
