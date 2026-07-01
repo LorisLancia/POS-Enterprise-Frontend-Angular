@@ -83,6 +83,18 @@ export const routes: Routes = [
             (m) => m.SalesReportComponent,
           ),
       },
+      {
+        path: 'suppliers',
+        loadComponent: () =>
+          import('./features/suppliers/suppliers.component').then((m) => m.SuppliersComponent),
+      },
+      {
+        path: 'inventory/starting-balance',
+        loadComponent: () =>
+          import('./features/suppliers/starting-balance.component').then(
+            (m) => m.StartingBalanceComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

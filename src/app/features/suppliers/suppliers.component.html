@@ -1,0 +1,113 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Fornitori</h1>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <i class="fa fa-plus"></i> Nuovo Fornitore
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="fa fa-search"></i>
+      <input type="text" placeholder="Cerca fornitore..." [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
+    </div>
+    <label class="toggle-inactive">
+      <input type="checkbox" [ngModel]="showInactive()" (ngModelChange)="showInactive.set($event)" />
+      Mostra inattivi
+    </label>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading">Caricamento...</div>
+  } @else {
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Contatto</th>
+          <th>Telefono</th>
+          <th>Email</th>
+          <th>Stato</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (supplier of filteredSuppliers(); track supplier.id) {
+        <tr [class.inactive]="!supplier.isActive">
+          <td>{{ supplier.name }}</td>
+          <td>{{ supplier.contact || '-' }}</td>
+          <td>{{ supplier.phone || '-' }}</td>
+          <td>{{ supplier.email || '-' }}</td>
+          <td>
+            <span class="badge" [class.active]="supplier.isActive" [class.inactive]="!supplier.isActive">
+              {{ supplier.isActive ? 'Attivo' : 'Inattivo' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-icon" (click)="openEdit(supplier)" title="Modifica">
+              <i class="fa fa-pencil"></i>
+            </button>
+            <button class="btn-icon" (click)="toggleStatus(supplier)" title="Attiva/Disattiva">
+              <i class="fa" [class.fa-toggle-on]="supplier.isActive" [class.fa-toggle-off]="!supplier.isActive"></i>
+            </button>
+            <button class="btn-icon btn-icon-danger" (click)="deleteSupplier(supplier)" title="Elimina">
+              <i class="fa fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="6" class="empty">Nessun fornitore trovato</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>
+
+@if (showForm()) {
+<div class="modal-overlay" (click)="closeForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingId() ? 'Modifica Fornitore' : 'Nuovo Fornitore' }}</h2>
+      <button class="btn-icon" (click)="closeForm()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field-wrapper">
+          <label>Nome *</label>
+          <input type="text" [ngModel]="formData().name"
+            (ngModelChange)="formData.set({...formData(), name: $event})" />
+        </div>
+        <div class="field-wrapper">
+          <label>Contatto</label>
+          <input type="text" [ngModel]="formData().contact"
+            (ngModelChange)="formData.set({...formData(), contact: $event})" />
+        </div>
+        <div class="field-wrapper">
+          <label>Telefono</label>
+          <input type="text" [ngModel]="formData().phone"
+            (ngModelChange)="formData.set({...formData(), phone: $event})" />
+        </div>
+        <div class="field-wrapper">
+          <label>Email</label>
+          <input type="email" [ngModel]="formData().email"
+            (ngModelChange)="formData.set({...formData(), email: $event})" />
+        </div>
+        <div class="field-wrapper full-width">
+          <label>Indirizzo</label>
+          <input type="text" [ngModel]="formData().address"
+            (ngModelChange)="formData.set({...formData(), address: $event})" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeForm()">Annulla</button>
+      <button class="btn btn-primary" (click)="save()">Salva</button>
+    </div>
+  </div>
+</div>
+}

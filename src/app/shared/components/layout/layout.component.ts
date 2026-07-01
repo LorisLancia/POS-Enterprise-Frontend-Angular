@@ -104,16 +104,17 @@ export class LayoutComponent {
           route: '/inventory/movements',
           permission: 'inventory:read',
         },
-        {
-          label: 'Suppliers',
-          icon: 'fa-truck',
-          route: '/inventory/suppliers',
-          permission: 'inventory:read',
-        },
+        { label: 'Suppliers', icon: 'fa-truck', route: '/suppliers', permission: 'inventory:read' },
         {
           label: 'Purchase Orders',
           icon: 'fa-file-invoice',
           route: '/inventory/purchase-orders',
+          permission: 'inventory:read',
+        },
+        {
+          label: 'Starting Balance',
+          icon: 'fa-boxes-packing',
+          route: '/inventory/starting-balance',
           permission: 'inventory:read',
         },
       ],

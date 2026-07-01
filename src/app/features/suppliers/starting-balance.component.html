@@ -1,0 +1,158 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Giacenza Iniziale</h1>
+    <p class="subtitle">Inserisci la giacenza di partenza per la migrazione dal vecchio POS</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Magazzino</h2>
+    </div>
+    <div class="card-body">
+      <div class="field-wrapper">
+        <label>Seleziona Magazzino *</label>
+        <select
+          [ngModel]="selectedWarehouseId()"
+          (ngModelChange)="selectedWarehouseId.set($event)"
+        >
+          <option [ngValue]="null">-- Seleziona --</option>
+          @for (wh of warehouses(); track wh.id) {
+            <option [value]="wh.id">{{ wh.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Aggiungi Articolo</h2>
+    </div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="field-wrapper">
+          <label>Materiale *</label>
+          <select
+            [ngModel]="newItem().materialId"
+            (ngModelChange)="newItem.set({...newItem(), materialId: $event, unitId: undefined})"
+          >
+            <option [ngValue]="undefined">-- Seleziona --</option>
+            @for (mat of materials(); track mat.id) {
+              <option [value]="mat.id">{{ mat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field-wrapper">
+          <label>Unità *</label>
+          <select
+            [ngModel]="newItem().unitId"
+            (ngModelChange)="newItem.set({...newItem(), unitId: $event})"
+            [disabled]="!newItem().materialId"
+          >
+            <option [ngValue]="undefined">-- Seleziona --</option>
+            @for (unit of selectedMaterialUnits(); track unit.id) {
+              <option [value]="unit.id">{{ unit.unit }} ({{ unit.quantity }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="field-wrapper">
+          <label>Quantità *</label>
+          <input
+            type="number"
+            step="0.01"
+            [ngModel]="newItem().quantity"
+            (ngModelChange)="newItem.set({...newItem(), quantity: $event})"
+          />
+        </div>
+
+        <div class="field-wrapper">
+          <label>Costo Unitario (THB) *</label>
+          <input
+            type="number"
+            step="0.01"
+            [ngModel]="newItem().unitCost"
+            (ngModelChange)="newItem.set({...newItem(), unitCost: $event})"
+          />
+        </div>
+
+        <div class="field-wrapper">
+          <label>Note</label>
+          <input
+            type="text"
+            placeholder="Es. Migrazione vecchio POS"
+            [ngModel]="newItem().notes"
+            (ngModelChange)="newItem.set({...newItem(), notes: $event})"
+          />
+        </div>
+
+        <div class="field-wrapper btn-wrapper">
+          <button class="btn btn-primary btn-small" (click)="addItem()">
+            <i class="fa fa-plus"></i> Aggiungi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (balanceItems().length > 0) {
+    <div class="card">
+      <div class="card-header">
+        <h2>Articoli da Inserire</h2>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Materiale</th>
+              <th>Unità</th>
+              <th>Quantità</th>
+              <th>Costo Unit.</th>
+              <th>Totale</th>
+              <th>Note</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of balanceItems(); track $index) {
+              <tr>
+                <td>{{ getMaterialName(item.materialId) }}</td>
+                <td>{{ getUnitLabel(item.unitId) }}</td>
+                <td>{{ item.quantity | number:'1.2-2' }}</td>
+                <td>{{ item.unitCost | number:'1.2-2' }}</td>
+                <td>{{ item.quantity * item.unitCost | number:'1.2-2' }}</td>
+                <td>{{ item.notes || '-' }}</td>
+                <td>
+                  <button class="btn-icon btn-icon-danger" (click)="removeItem($index)">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4"><strong>Totale Valore Giacenza</strong></td>
+              <td colspan="3"><strong>{{ totalValue() | number:'1.2-2' }} THB</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="actions-footer">
+      <button
+        class="btn btn-primary btn-large"
+        (click)="save()"
+        [disabled]="isSaving()"
+      >
+        @if (isSaving()) {
+          <i class="fa fa-spinner fa-spin"></i> Salvataggio...
+        } @else {
+          <i class="fa fa-save"></i> Salva Giacenza Iniziale
+        }
+      </button>
+    </div>
+  }
+</div>
