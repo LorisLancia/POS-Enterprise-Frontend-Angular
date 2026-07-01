@@ -74,8 +74,14 @@ export class LayoutComponent {
         { label: 'Products', icon: 'fa-box-open', route: '/products', permission: 'product:read' },
         {
           label: 'Modifier Groups',
-          icon: 'fa-sliders',
+          icon: 'fa-puzzle-piece',
           route: '/modifier-groups',
+          permission: 'product:read',
+        },
+        {
+          label: 'Addon Groups',
+          icon: 'fa-layer-group', // o 'fa-puzzle-piece', 'fa-layer-group', scegli tu
+          route: '/addon-groups',
           permission: 'product:read',
         },
         { label: 'Materials', icon: 'fa-flask', route: '/materials', permission: 'inventory:read' },
