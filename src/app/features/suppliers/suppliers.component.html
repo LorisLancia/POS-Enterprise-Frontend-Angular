@@ -1,36 +1,36 @@
 <div class="page-container">
   <div class="page-header">
-    <h1>Fornitori</h1>
+    <h1>Suppliers</h1>
     <button class="btn btn-primary" (click)="openCreate()">
-      <i class="fa fa-plus"></i> Nuovo Fornitore
+      <i class="fa fa-plus"></i> New Supplier
     </button>
   </div>
 
   <div class="filter-bar">
     <div class="search-box">
       <i class="fa fa-search"></i>
-      <input type="text" placeholder="Cerca fornitore..." [ngModel]="searchTerm()"
+      <input type="text" placeholder="Search suppliers..." [ngModel]="searchTerm()"
         (ngModelChange)="searchTerm.set($event)" />
     </div>
     <label class="toggle-inactive">
       <input type="checkbox" [ngModel]="showInactive()" (ngModelChange)="showInactive.set($event)" />
-      Mostra inattivi
+      Show inactive
     </label>
   </div>
 
   @if (isLoading()) {
-  <div class="loading">Caricamento...</div>
+  <div class="loading">Loading...</div>
   } @else {
   <div class="table-container">
     <table class="data-table">
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>Contatto</th>
-          <th>Telefono</th>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Phone</th>
           <th>Email</th>
-          <th>Stato</th>
-          <th>Azioni</th>
+          <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -42,24 +42,24 @@
           <td>{{ supplier.email || '-' }}</td>
           <td>
             <span class="badge" [class.active]="supplier.isActive" [class.inactive]="!supplier.isActive">
-              {{ supplier.isActive ? 'Attivo' : 'Inattivo' }}
+              {{ supplier.isActive ? 'Active' : 'Inactive' }}
             </span>
           </td>
           <td class="actions">
-            <button class="btn-icon" (click)="openEdit(supplier)" title="Modifica">
+            <button class="btn-icon" (click)="openEdit(supplier)" title="Edit">
               <i class="fa fa-pencil"></i>
             </button>
-            <button class="btn-icon" (click)="toggleStatus(supplier)" title="Attiva/Disattiva">
+            <button class="btn-icon" (click)="toggleStatus(supplier)" title="Activate/Deactivate">
               <i class="fa" [class.fa-toggle-on]="supplier.isActive" [class.fa-toggle-off]="!supplier.isActive"></i>
             </button>
-            <button class="btn-icon btn-icon-danger" (click)="deleteSupplier(supplier)" title="Elimina">
+            <button class="btn-icon btn-icon-danger" (click)="deleteSupplier(supplier)" title="Delete">
               <i class="fa fa-trash"></i>
             </button>
           </td>
         </tr>
         } @empty {
         <tr>
-          <td colspan="6" class="empty">Nessun fornitore trovato</td>
+          <td colspan="6" class="empty">No suppliers found</td>
         </tr>
         }
       </tbody>
@@ -72,23 +72,23 @@
 <div class="modal-overlay" (click)="closeForm()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ editingId() ? 'Modifica Fornitore' : 'Nuovo Fornitore' }}</h2>
+      <h2>{{ editingId() ? 'Edit Supplier' : 'New Supplier' }}</h2>
       <button class="btn-icon" (click)="closeForm()"><i class="fa fa-times"></i></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="field-wrapper">
-          <label>Nome *</label>
+          <label>Name *</label>
           <input type="text" [ngModel]="formData().name"
             (ngModelChange)="formData.set({...formData(), name: $event})" />
         </div>
         <div class="field-wrapper">
-          <label>Contatto</label>
+          <label>Contact</label>
           <input type="text" [ngModel]="formData().contact"
             (ngModelChange)="formData.set({...formData(), contact: $event})" />
         </div>
         <div class="field-wrapper">
-          <label>Telefono</label>
+          <label>Phone</label>
           <input type="text" [ngModel]="formData().phone"
             (ngModelChange)="formData.set({...formData(), phone: $event})" />
         </div>
@@ -98,15 +98,15 @@
             (ngModelChange)="formData.set({...formData(), email: $event})" />
         </div>
         <div class="field-wrapper full-width">
-          <label>Indirizzo</label>
+          <label>Address</label>
           <input type="text" [ngModel]="formData().address"
             (ngModelChange)="formData.set({...formData(), address: $event})" />
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeForm()">Annulla</button>
-      <button class="btn btn-primary" (click)="save()">Salva</button>
+      <button class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+      <button class="btn btn-primary" (click)="save()">Save</button>
     </div>
   </div>
 </div>

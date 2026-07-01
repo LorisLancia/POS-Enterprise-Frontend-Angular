@@ -91,14 +91,14 @@ export const routes: Routes = [
       {
         path: 'inventory/starting-balance',
         loadComponent: () =>
-          import('./features/suppliers/starting-balance.component').then(
+          import('./features/inventory/starting-balance/starting-balance.component').then(
             (m) => m.StartingBalanceComponent,
           ),
       },
       {
         path: 'inventory/purchase-orders',
         loadComponent: () =>
-          import('./features/purchase-orders/purchase-orders.component').then(
+          import('./features/inventory/purchase-orders/purchase-orders.component').then(
             (m) => m.PurchaseOrdersComponent,
           ),
       },

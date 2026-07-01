@@ -1,13 +1,13 @@
 import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { InventoryService } from '../../core/services/inventory.service';
-import { MaterialsService } from '../../core/services/materials.service';
-import { WarehouseService } from '../../core/services/warehouse.service';
-import { ToastService } from '../../core/services/toast.service';
-import { Material } from '../../core/models/material.model';
-import { Warehouse } from '../../core/models/warehouse.model';
-import { StartingBalanceItemRequest } from '../../core/models/inventory.model';
+import { InventoryService } from '../../../core/services/inventory.service';
+import { MaterialsService } from '../../../core/services/materials.service';
+import { WarehouseService } from '../../../core/services/warehouse.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { Material } from '../../../core/models/material.model';
+import { Warehouse } from '../../../core/models/warehouse.model';
+import { StartingBalanceItemRequest } from '../../../core/models/inventory.model';
 
 @Component({
   selector: 'app-starting-balance',
@@ -40,12 +40,12 @@ export class StartingBalanceComponent {
   selectedMaterialUnits = computed(() => {
     const matId = this.newItem().materialId;
     if (!matId) return [];
-    const mat = this.materials().find(m => m.id === matId);
+    const mat = this.materials().find((m) => m.id === matId);
     return mat?.units || [];
   });
 
   totalValue = computed(() => {
-    return this.balanceItems().reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+    return this.balanceItems().reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
   });
 
   constructor() {
@@ -74,7 +74,7 @@ export class StartingBalanceComponent {
       return;
     }
 
-    this.balanceItems.update(items => [
+    this.balanceItems.update((items) => [
       ...items,
       {
         materialId: item.materialId!,
@@ -95,16 +95,16 @@ export class StartingBalanceComponent {
   }
 
   removeItem(index: number) {
-    this.balanceItems.update(items => items.filter((_, i) => i !== index));
+    this.balanceItems.update((items) => items.filter((_, i) => i !== index));
   }
 
   getMaterialName(materialId: number): string {
-    return this.materials().find(m => m.id === materialId)?.name || 'N/A';
+    return this.materials().find((m) => m.id === materialId)?.name || 'N/A';
   }
 
   getUnitLabel(unitId: number): string {
     for (const mat of this.materials()) {
-      const unit = mat.units?.find(u => u.id === unitId);
+      const unit = mat.units?.find((u) => u.id === unitId);
       if (unit) return unit.unit;
     }
     return 'N/A';
@@ -122,21 +122,23 @@ export class StartingBalanceComponent {
     }
 
     this.isSaving.set(true);
-    this.inventoryService.createStartingBalance({
-      warehouseId,
-      createdBy: 1,
-      items: this.balanceItems(),
-    }).subscribe({
-      next: () => {
-        this.toastService.success('Giacenza iniziale salvata con successo');
-        this.balanceItems.set([]);
-        this.selectedWarehouseId.set(null);
-        this.isSaving.set(false);
-      },
-      error: (err: any) => {
-        this.toastService.error(err.error?.message || 'Errore nel salvataggio');
-        this.isSaving.set(false);
-      },
-    });
+    this.inventoryService
+      .createStartingBalance({
+        warehouseId,
+        createdBy: 1,
+        items: this.balanceItems(),
+      })
+      .subscribe({
+        next: () => {
+          this.toastService.success('Giacenza iniziale salvata con successo');
+          this.balanceItems.set([]);
+          this.selectedWarehouseId.set(null);
+          this.isSaving.set(false);
+        },
+        error: (err: any) => {
+          this.toastService.error(err.error?.message || 'Errore nel salvataggio');
+          this.isSaving.set(false);
+        },
+      });
   }
 }

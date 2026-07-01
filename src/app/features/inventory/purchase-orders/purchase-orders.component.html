@@ -1,0 +1,204 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Purchase Orders</h1>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <i class="fa fa-plus"></i> New Purchase Order
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="field-wrapper">
+      <label>Warehouse</label>
+      <select [ngModel]="selectedWarehouseId()" (ngModelChange)="selectedWarehouseId.set($event); loadOrders()">
+        <option [ngValue]="null">All Warehouses</option>
+        @for (wh of warehouses(); track wh.id) {
+        <option [value]="wh.id">{{ wh.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading">Loading...</div>
+  } @else {
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Supplier</th>
+          <th>Warehouse</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.id) {
+        <tr>
+          <td>#{{ order.id }}</td>
+          <td>{{ getSupplierName(order.supplierId) }}</td>
+          <td>{{ order.warehouse?.name || '-' }}</td>
+          <td>{{ order.items.length || 0 }}</td>
+          <td>{{ order.total | number:'1.2-2' }} THB</td>
+          <td>
+            <span class="badge" [class]="'status-' + order.status">
+              {{ getStatusLabel(order.status) }}
+            </span>
+          </td>
+          <td>{{ order.createdAt | date:'short' }}</td>
+          <td class="actions">
+            @if (order.status === 'draft' || order.status === 'sent') {
+            <button class="btn-icon" (click)="receiveOrder(order)" title="Receive">
+              <i class="fa fa-check"></i>
+            </button>
+            <button class="btn-icon btn-icon-danger" (click)="cancelOrder(order)" title="Cancel">
+              <i class="fa fa-times"></i>
+            </button>
+            }
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="8" class="empty">No purchase orders found</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>
+
+@if (showForm()) {
+<div class="modal-overlay" (click)="closeForm()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>New Purchase Order</h2>
+      <button class="btn-icon" (click)="closeForm()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field-wrapper">
+          <label>Warehouse *</label>
+          <select [ngModel]="selectedWarehouseId()" (ngModelChange)="selectedWarehouseId.set($event)">
+            <option [ngValue]="null">-- Select --</option>
+            @for (wh of warehouses(); track wh.id) {
+            <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="field-wrapper">
+          <label>Supplier *</label>
+          <select [ngModel]="selectedSupplierId()" (ngModelChange)="selectedSupplierId.set($event)">
+            <option [ngValue]="null">-- Select --</option>
+            @for (sup of suppliers(); track sup.id) {
+            <option [value]="sup.id">{{ sup.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Add Items</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="field-wrapper">
+              <label>Material *</label>
+              <select [ngModel]="newItemMaterialId()"
+                (ngModelChange)="newItemMaterialId.set($event); newItemUnitId.set(undefined)">
+                <option [ngValue]="undefined">-- Select --</option>
+                @for (mat of materials(); track mat.id) {
+                <option [value]="mat.id">{{ mat.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="field-wrapper">
+              <label>Unit *</label>
+              <select [ngModel]="newItemUnitId()" (ngModelChange)="newItemUnitId.set($event)"
+                [disabled]="!newItemMaterialId()">
+                <option [ngValue]="undefined">-- Select --</option>
+                @for (unit of selectedMaterialUnits(); track unit.id) {
+                <option [value]="unit.id">{{ unit.unit }} ({{ unit.quantity }})</option>
+                }
+              </select>
+            </div>
+            <div class="field-wrapper">
+              <label>Quantity *</label>
+              <input type="number" step="0.01" [ngModel]="newItemQuantity()"
+                (ngModelChange)="newItemQuantity.set($event)" />
+            </div>
+            <div class="field-wrapper">
+              <label>Unit Price (THB) *</label>
+              <input type="number" step="0.01" [ngModel]="newItemUnitPrice()"
+                (ngModelChange)="newItemUnitPrice.set($event)" />
+            </div>
+            <div class="field-wrapper btn-wrapper">
+              <button class="btn btn-primary btn-small" (click)="addItem()">
+                <i class="fa fa-plus"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (poItems().length > 0) {
+      <div class="card">
+        <div class="card-header">
+          <h3>Order Items</h3>
+        </div>
+        <div class="card-body">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Unit</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of poItems(); track $index) {
+              <tr>
+                <td>{{ getMaterialName(item.materialId) }}</td>
+                <td>{{ getUnitLabel(item.unitId) }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unitPrice | number:'1.2-2' }}</td>
+                <td>{{ item.quantity * item.unitPrice | number:'1.2-2' }}</td>
+                <td>
+                  <button class="btn-icon btn-icon-danger" (click)="removeItem($index)">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4"><strong>Total Order Value</strong></td>
+                <td colspan="2"><strong>{{ totalValue() | number:'1.2-2' }} THB</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      }
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+      <button class="btn btn-primary" (click)="save()" [disabled]="isSaving()">
+        @if (isSaving()) {
+        <i class="fa fa-spinner fa-spin"></i> Saving...
+        } @else {
+        <i class="fa fa-save"></i> Create Order
+        }
+      </button>
+    </div>
+  </div>
+</div>
+}
